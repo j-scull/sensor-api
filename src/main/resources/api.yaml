@@ -1,0 +1,207 @@
+openapi: 3.0.0
+info:
+  version: 1.0.0
+  title: Temperature and Humidity
+  license:
+    name: MIT
+servers:
+  - url: http://sensor-api
+paths:
+  /update:
+    post:
+      summary: Log temperatre and humidity data
+      operationId: logData
+      security:
+        - api_key: []
+      tags:
+        - update
+      parameters:
+        - name: temperature
+          in: query
+          description: temperature to be logged
+          required: true
+          schema:
+            type: number
+            format: float
+        - name: humidity
+          in: query
+          description: humidity to be logged
+          required: true
+          schema:
+            type: number
+            format: float
+      responses:
+        201:
+          description: Null response
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /dataPoints/{sensorId}:
+    get:
+      summary: List dataPoints for a specified period
+      operationId: listDataPoints
+      security:
+        - api_key: []
+      tags:
+        - dataPoints
+      parameters:
+        - name: sensorId
+          in: path
+          description: Get datapoints logged by this sensor
+          required: true
+          schema:
+            type: string
+        - name: year
+          in: query
+          description: Get dataPoints for this year
+          required: true
+          schema:
+            type: string
+        - name: month
+          in: query
+          description: Get dataPoints for this month
+          required: true
+          schema:
+            type: string
+        - name: date
+          in: query
+          description: Get dataPoints for this date of month
+          required: false
+          schema:
+            type: string
+      responses:
+        200:
+          description: An array of dataPoints
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataPoints"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    
+  /dataPoints/{sensorId}/range:
+    get:
+      summary: List dataPoints for a specified time range
+      operationId: dataPointsRange
+      security:
+        - api_key: []
+      tags:
+        - dataPointsRange
+      parameters:
+        - name: sensorId
+          in: path
+          description: Get datapoints logged by this sensor
+          required: true
+          schema:
+            type: string
+        - name: start
+          in: query
+          required: true
+          description: Get data from this time
+          schema:
+            type: string
+        - name: stop
+          in: query
+          required: true
+          description: Get data up until this time 
+          schema:
+            type: string
+      responses:
+        200:
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataPoints"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+                
+  /sensors:
+    get:
+      summary: List sensors that log data
+      operationId: listSensors
+      security:
+        - api_key: []
+      tags:
+        - sensors
+      responses:
+        200:
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Sensors"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      
+    
+components:
+  schemas:
+    DataPoint:
+      type: object
+      required:
+        - temperature
+        - humidity
+        - dateTime
+      properties:
+        temperature:
+          type: number
+          format: float32
+        humidity:
+          type: number
+          format: float32
+        dateTime:
+          type: string
+    DataPoints:
+      type: array
+      items:
+        $ref: "#/components/schemas/DataPoint"
+    Sensor:
+      type: object
+      required:
+        - name
+        - location
+        - startDate
+      properties:
+        name:
+          type: string
+        location:
+          type: string
+        startDate:
+          type: string
+    Sensors:
+      type: array
+      items:
+        $ref: '#/components/schemas/Sensor'
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          format: int32
+        message:
+          type: string
+  securitySchemes:
+    api_key:
+      type: apiKey
+      name: api_key
+      in: header   # or query
