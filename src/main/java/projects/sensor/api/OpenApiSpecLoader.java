@@ -1,7 +1,12 @@
 package projects.sensor.api;
 
 import io.vertx.core.Vertx;
+import io.vertx.core.http.HttpServer;
+import io.vertx.core.http.HttpServerOptions;
+import io.vertx.ext.web.Router;
+import io.vertx.ext.web.handler.APIKeyHandler;
 import io.vertx.ext.web.openapi.RouterBuilder;
+import io.vertx.ext.web.validation.RequestParameter;
 import io.vertx.ext.web.validation.RequestParameters;
 import io.vertx.ext.web.validation.ValidationHandler;
 
@@ -24,20 +29,68 @@ public class OpenApiSpecLoader {
         logger.info("OpenApiSpecLoader - Loading spec {}", SPEC_FILE);
         RouterBuilder.create(vertx, SPEC_FILE)
                 .onSuccess(routerBuilder -> {
+
                     logger.info("OpenApiSpecLoader - Spec loaded successfully");
+
+//                    routerBuilder.securityHandler("ApiKeyAuth")
+//                            .bindBlocking(config ->
+//                                    APIKeyHandler.create(authProvider)
+//                                            .header(config.getString("name")));
+
                     routerBuilder.operation("logData").handler(routingContext -> {
                         RequestParameters params = routingContext.get(ValidationHandler.REQUEST_CONTEXT_KEY);
-                        logger.info("OpenApiSpecLoader - params = {}", params);
+                        RequestParameter temperature = params.queryParameter("temperature");
+                        RequestParameter humidity = params.queryParameter("humidity");
+                        logger.info("logData - params = {}", params);
                         routingContext.response()
-                                .setStatusCode(201);
+                                .setStatusCode(201)
+                                .setStatusMessage("OK")
+                                .end();
                     });
 
+                    routerBuilder.operation("listDataPoints").handler(routingContext -> {
+                        RequestParameters params = routingContext.get(ValidationHandler.REQUEST_CONTEXT_KEY);
+                        logger.info("listDataPoints - params = {}", params);
+                        routingContext.response()
+                                .setStatusCode(200)
+                                .setStatusMessage("OK")
+                                .end();
+                    });
+
+                    routerBuilder.operation("dataPointsRange").handler(routingContext -> {
+                        RequestParameters params = routingContext.get(ValidationHandler.REQUEST_CONTEXT_KEY);
+                        logger.info("dataPointsRange - params = {}", params);
+                        routingContext.response()
+                                .setStatusCode(200)
+                                .setStatusMessage("OK")
+                                .end();
+                    });
+
+                    routerBuilder.operation("listSensors").handler(routingContext -> {
+                        RequestParameters  params = routingContext.get(ValidationHandler.REQUEST_CONTEXT_KEY);
+                        logger.info("listSensors - params = {}", params);
+                        routingContext.response()
+                                .setStatusCode(200)
+                                .setStatusMessage("OK")
+                                .end();
+                    });
+
+                    // Generate the router
+                    Router router = routerBuilder.createRouter();
+
+                    // Start server instance
+                    HttpServer server = vertx.createHttpServer(new HttpServerOptions()
+                            .setPort(8080)
+                            .setHost("localhost"));
+                    server.requestHandler(router).listen();
 
                 })
                 .onFailure(err -> {
                     // Something went wrong during router builder initialization
                     logger.error("OpenApiSpecLoader - Failed to load spec!");
                 });
+
+
     }
 
 
