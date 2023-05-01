@@ -13,6 +13,11 @@ import io.vertx.ext.web.validation.ValidationHandler;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
+import projects.sensor.model.DataPoint;
+
+import java.util.Date;
+
+
 public class OpenApiSpecLoader {
 
     private final static String SPEC_FILE = "api.yaml";
@@ -22,6 +27,7 @@ public class OpenApiSpecLoader {
     private final Logger logger = LoggerFactory.getLogger(App.class);
 
     public OpenApiSpecLoader() {
+
         vertx = Vertx.vertx();
     }
 
@@ -41,7 +47,8 @@ public class OpenApiSpecLoader {
                         RequestParameters params = routingContext.get(ValidationHandler.REQUEST_CONTEXT_KEY);
                         RequestParameter temperature = params.queryParameter("temperature");
                         RequestParameter humidity = params.queryParameter("humidity");
-                        logger.info("logData - params = {}", params);
+                        Date dateTime = new Date();
+                        logger.info("logData - temperature = {}, humidity = {}, time = {}", temperature, humidity, dateTime);
                         routingContext.response()
                                 .setStatusCode(201)
                                 .setStatusMessage("OK")
