@@ -21,15 +21,15 @@ paths:
           description: temperature to be logged
           required: true
           schema:
-            type: number
-            format: float
+            type: integer
+            format: int32
         - name: humidity
           in: query
           description: humidity to be logged
           required: true
           schema:
-            type: number
-            format: float
+            type: integer
+            format: int32
       responses:
         201:
           description: Null response
@@ -161,11 +161,11 @@ components:
         - dateTime
       properties:
         temperature:
-          type: number
-          format: float32
+          type: integer
+          format: int32
         humidity:
-          type: number
-          format: float32
+          type: integer
+          format: int32
         dateTime:
           type: string
     DataPoints:

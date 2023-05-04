@@ -3,6 +3,7 @@ package projects.sensor.api;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.APIKeyHandler;
 import io.vertx.ext.web.openapi.RouterBuilder;
@@ -61,7 +62,7 @@ public class OpenApiSpecLoader {
                         routingContext.response()
                                 .setStatusCode(200)
                                 .setStatusMessage("OK")
-                                .end();
+                                .end(getDataPoints().toBuffer());
                     });
 
                     routerBuilder.operation("dataPointsRange").handler(routingContext -> {
@@ -100,5 +101,16 @@ public class OpenApiSpecLoader {
 
     }
 
+
+    private JsonObject getDataPoints() {
+        int n = 4;
+        DataPoint[] dataPoints = new DataPoint[n];//
+        for (int i = 0; i < n; i++) {
+            int temperature = (int) (Math.random() * 30);
+            int humidity = (int) (Math.random() * 100);
+            dataPoints[i] = new DataPoint(temperature, humidity, String.valueOf(i));
+        }
+        return new JsonObject().put("data", dataPoints);
+    }
 
 }
