@@ -175,7 +175,7 @@ components:
     Sensor:
       type: object
       required:
-        - name
+        - id
         - location
         - startDate
       properties:
