@@ -1,42 +1,55 @@
 package projects.sensor.api;
 
 import io.vertx.core.Vertx;
+import io.vertx.core.file.FileSystem;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.APIKeyHandler;
+import io.vertx.ext.web.handler.StaticHandler;
 import io.vertx.ext.web.openapi.RouterBuilder;
 import io.vertx.ext.web.openapi.RouterBuilderOptions;
 import io.vertx.ext.web.validation.RequestParameter;
 import io.vertx.ext.web.validation.RequestParameters;
 import io.vertx.ext.web.validation.ValidationHandler;
 
+//import jdk.jpackage.internal.IOUtils;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
 import projects.sensor.model.DataPoint;
 import projects.sensor.model.Sensor;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Date;
 
 
 public class OpenApiSpecLoader {
 
     private static final String SPEC_FILE = "api.yaml";
-    private static final int PORT = 8080;
+
+    // ToDo - currently writing to swagger-ui in the main project dir, needs a location in the target dir
+    private final String SWAGGER_UI_DIR = "swagger-ui";
+    private static final int PORT = 9090;
 
     private Vertx vertx;
 
     private final Logger logger = LoggerFactory.getLogger(App.class);
 
     public OpenApiSpecLoader() {
-
         vertx = Vertx.vertx();
     }
 
-    public void loadSpec(){
+    public void loadSpec() {
         logger.info("OpenApiSpecLoader - Loading spec {}", SPEC_FILE);
         RouterBuilder.create(vertx, SPEC_FILE)
                 .onSuccess(routerBuilder -> {
@@ -134,6 +147,32 @@ public class OpenApiSpecLoader {
                     // Generate the router
                     Router router = routerBuilder.createRouter();
 
+                    // Create swagger-ui end point
+                    loadWebJar("META-INF/resources/webjars/swagger-ui/5.9.0", SWAGGER_UI_DIR);
+
+                    // ToDo - remove this. It works, but should be loading necessary files only after the webjar files
+                    //  are copied to the swagger-ui directory
+                    //
+                    try {
+                        Thread.sleep(5000);
+                    } catch (InterruptedException e) {
+
+                    }
+                    // Todo - call these methods in success handler for loadWebJar
+                    try {
+                        loadSwaggerInitializer();
+                    } catch (IOException e) {
+                        logger.error("Unable to overwrite swagger-initializer.js, exception = {}", e);
+                    }
+                    try {
+                        loadApiSpec();
+                    } catch (IOException e) {
+                        logger.error("Unable to load api.yaml, exception = {}", e);
+                    }
+
+                    // Todo - currently serving the swagger-ui at /, maybe redirect to /swagger
+                    router.route("/*").handler(StaticHandler.create(SWAGGER_UI_DIR));
+
                     router.errorHandler(404, routingContext -> {
                         JsonObject errorObject = new JsonObject();
                         errorObject.put("code", 404);
@@ -160,6 +199,7 @@ public class OpenApiSpecLoader {
                 });
     }
 
+    // Mock a response
     private JsonObject getDataPoints() {
         int n = 4;
         DataPoint[] dataPoints = new DataPoint[n];//
@@ -171,6 +211,7 @@ public class OpenApiSpecLoader {
         return new JsonObject().put("data", dataPoints);
     }
 
+    // Mock a reponse
     private JsonObject getSensors() {
         Sensor[] sensors = new Sensor[4];
         sensors[0] = new Sensor("1", "somewhere", "01-01-2023");
@@ -178,6 +219,55 @@ public class OpenApiSpecLoader {
         sensors[2] = new Sensor("3", "somewhere else", "01-01-2023");
         sensors[3] = new Sensor("4", "somewhere slse", "01-01-2023");
         return new JsonObject().put("data", sensors);
+    }
+
+    private void loadWebJar(String source, String dest) {
+        vertx.fileSystem().mkdir(dest);
+        vertx.fileSystem().exists(source, exists -> {
+            if (exists.result()) {
+                try {
+                    vertx.fileSystem().copyRecursive(source, dest, true, res -> {
+                        logger.info("Successfully copied source = {} to destination = {}", source, dest);
+                    });
+                } catch (Exception e) {
+                    logger.error("Unable to copy source = {} to destination = {}, excetion = {}", source, dest, e);
+                }
+            } else {
+                logger.error("Could not find source webjar location = {}", source);
+            }
+        });
+    }
+
+    // ToDo - make a load/move resource file to destination
+    private void loadSwaggerInitializer() throws IOException{
+
+        // Load swagger-initializer-override.js
+        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+        URL url = classLoader.getResource("swagger-initializer-override.js");
+        Path path = Paths.get(url.getPath());
+        byte[] buffer = Files.readAllBytes(path);
+
+        // Overwrite the swagger-initializer.js copied from the swagger-uii webjar
+        File targetFile = new File("swagger-ui/swagger-initializer.js");
+        OutputStream outStream = new FileOutputStream(targetFile);
+        outStream.write(buffer);
+        outStream.close();
+    }
+
+    // ToDo - make a load/move resource file to destination
+    private void loadApiSpec() throws IOException{
+
+        // Load swagger-initializer-override.js
+        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+        URL url = classLoader.getResource("api.yaml");
+        Path path = Paths.get(url.getPath());
+        byte[] buffer = Files.readAllBytes(path);
+
+        // Overwrite the swagger-initializer.js copied from the swagger-uii webjar
+        File targetFile = new File("swagger-ui/api.yaml");
+        OutputStream outStream = new FileOutputStream(targetFile);
+        outStream.write(buffer);
+        outStream.close();
     }
 
 }

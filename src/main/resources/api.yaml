@@ -5,7 +5,7 @@ info:
   license:
     name: MIT
 servers:
-  - url: http://sensor-api
+  - url: http://sensor-api/v1
 paths:
   /update:
     post:
