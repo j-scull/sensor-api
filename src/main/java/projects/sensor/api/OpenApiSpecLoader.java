@@ -1,5 +1,8 @@
 package projects.sensor.api;
 
+import io.reactivex.Observable;
+import io.reactivex.Single;
+import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.file.FileSystem;
 import io.vertx.core.http.HttpHeaders;
@@ -148,30 +151,16 @@ public class OpenApiSpecLoader {
                     Router router = routerBuilder.createRouter();
 
                     // Create swagger-ui end point
-                    loadWebJar("META-INF/resources/webjars/swagger-ui/5.9.0", SWAGGER_UI_DIR);
-
-                    // ToDo - remove this. It works, but should be loading necessary files only after the webjar files
-                    //  are copied to the swagger-ui directory
-                    //
-                    try {
-                        Thread.sleep(5000);
-                    } catch (InterruptedException e) {
-
-                    }
-                    // Todo - call these methods in success handler for loadWebJar
-                    try {
-                        loadSwaggerInitializer();
-                    } catch (IOException e) {
-                        logger.error("Unable to overwrite swagger-initializer.js, exception = {}", e);
-                    }
-                    try {
-                        loadApiSpec();
-                    } catch (IOException e) {
-                        logger.error("Unable to load api.yaml, exception = {}", e);
-                    }
-
-                    // Todo - currently serving the swagger-ui at /, maybe redirect to /swagger
-                    router.route("/*").handler(StaticHandler.create(SWAGGER_UI_DIR));
+                    loadWebJar("META-INF/resources/webjars/swagger-ui/5.9.0", SWAGGER_UI_DIR).subscribe(r -> {
+                        // ToDo - use rx patterns here
+                        // delete existing swagger-ui file
+                        // on success, copy new wagger-initializer-override.js and api.yaml to swagger-ui directory
+                        // merge completable output, on success mount swagger-ui to endpoint
+                        copyFile("swagger-initializer-override.js", "swagger-ui/swagger-initializer.js");
+                        copyFile("api.yaml", "swagger-ui/api.yaml");
+                        router.route("/*").handler(StaticHandler.create(SWAGGER_UI_DIR));
+                        logger.info("Created swagger-ui endpoint successfully");
+                    }, e -> logger.error("Failed to create swagger-ui endpoint"));
 
                     router.errorHandler(404, routingContext -> {
                         JsonObject errorObject = new JsonObject();
@@ -221,53 +210,41 @@ public class OpenApiSpecLoader {
         return new JsonObject().put("data", sensors);
     }
 
-    private void loadWebJar(String source, String dest) {
-        vertx.fileSystem().mkdir(dest);
-        vertx.fileSystem().exists(source, exists -> {
-            if (exists.result()) {
-                try {
-                    vertx.fileSystem().copyRecursive(source, dest, true, res -> {
-                        logger.info("Successfully copied source = {} to destination = {}", source, dest);
-                    });
-                } catch (Exception e) {
-                    logger.error("Unable to copy source = {} to destination = {}, excetion = {}", source, dest, e);
+    private Single<Future<Void>> loadWebJar(String source, String dest) {
+        return Single.defer(() -> Single.just(vertx.fileSystem().mkdir(dest).onSuccess(r -> {
+            vertx.fileSystem().exists(source, exists -> {
+                if (exists.result()) {
+                    try {
+                        vertx.fileSystem().copyRecursive(source, dest, true, res -> {
+                            logger.info("Successfully copied source = {} to destination = {}", source, dest);
+                        });
+                    } catch (Exception e) {
+                        logger.error("Unable to copy source = {} to destination = {}, excetion = {}", source, dest, e);
+                    }
+                } else {
+                    logger.error("Could not find source webjar location = {}", source);
                 }
-            } else {
-                logger.error("Could not find source webjar location = {}", source);
-            }
-        });
+            });
+        }).onFailure(e -> logger.error("Unable to create destination directory = {}", dest))));
     }
 
-    // ToDo - make a load/move resource file to destination
-    private void loadSwaggerInitializer() throws IOException{
-
-        // Load swagger-initializer-override.js
+    // ToDo - handle this asynchronously
+    private void copyFile(String sourceFilePath, String destFilePath) throws IOException{
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-        URL url = classLoader.getResource("swagger-initializer-override.js");
+        URL url = classLoader.getResource(sourceFilePath);
         Path path = Paths.get(url.getPath());
         byte[] buffer = Files.readAllBytes(path);
 
-        // Overwrite the swagger-initializer.js copied from the swagger-uii webjar
-        File targetFile = new File("swagger-ui/swagger-initializer.js");
+        File targetFile = new File(destFilePath);
         OutputStream outStream = new FileOutputStream(targetFile);
         outStream.write(buffer);
         outStream.close();
     }
 
-    // ToDo - make a load/move resource file to destination
-    private void loadApiSpec() throws IOException{
 
-        // Load swagger-initializer-override.js
-        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-        URL url = classLoader.getResource("api.yaml");
-        Path path = Paths.get(url.getPath());
-        byte[] buffer = Files.readAllBytes(path);
+//    private Single<Void> deleteFile(String File) {
+//
+//    }
 
-        // Overwrite the swagger-initializer.js copied from the swagger-uii webjar
-        File targetFile = new File("swagger-ui/api.yaml");
-        OutputStream outStream = new FileOutputStream(targetFile);
-        outStream.write(buffer);
-        outStream.close();
-    }
 
 }
