@@ -15,11 +15,7 @@ import io.vertx.ext.web.validation.RequestParameter;
 import io.vertx.ext.web.validation.RequestParameters;
 import io.vertx.ext.web.validation.ValidationHandler;
 import io.vertx.reactivex.core.Vertx;
-import io.vertx.reactivex.core.file.FileSystem;
 
-
-
-//import jdk.jpackage.internal.IOUtils;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -27,15 +23,15 @@ import projects.sensor.model.DataPoint;
 import projects.sensor.model.Sensor;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Date;
 
 public class OpenApiSpecLoader {
 
     private static final String SPEC_FILE = "api.yaml";
-    private final String SWAGGER_UI_DIR = "swagger-ui";
+    private static final String SWAGGER_UI_DIR = "swagger-ui";
     private static final int PORT = 9090;
 
-//    private Vertx vertx;
     private Vertx vertx;
 
     private final Logger logger = LoggerFactory.getLogger(App.class);
@@ -141,13 +137,23 @@ public class OpenApiSpecLoader {
                     // Generate the router
                     Router router = routerBuilder.createRouter();
 
-                    // Create swagger-ui end point
-                    loadWebJars("META-INF/resources/webjars/swagger-ui/5.9.0", SWAGGER_UI_DIR, handler -> {
-                                replaceFile("swagger-initializer-override.js", SWAGGER_UI_DIR + "/swagger-initializer.js");
-                                copyFile(SPEC_FILE, SWAGGER_UI_DIR + "/" + SPEC_FILE);
-                                router.route("/*").handler(StaticHandler.create(SWAGGER_UI_DIR));
-                    }).subscribe(res -> logger.info("Created swagger-ui endpoint successfully"),
-                            e -> logger.error("Failed to create swagger-ui endpoint, exception = {}", e));
+                    /**
+                     * Moves swagger-ui webjar files into a swagger-ui directory
+                     * Moves the api.yaml into this directory
+                     * Replaces swagger-initializer.js with a version that points to api.yaml
+                     * Creates the swagger-ui endpoint
+                     */
+                    loadWebJars("META-INF/resources/webjars/swagger-ui/5.9.0", SWAGGER_UI_DIR, null)
+                            .doOnError(e -> logger.error("Failed to create swagger-ui endpoint, exception = {}", e))
+                            .subscribe(r -> {
+                                ArrayList<Single<File>> arr = new ArrayList<>();
+                                arr.add(replaceFile("swagger-initializer-override.js", SWAGGER_UI_DIR + "/swagger-initializer.js"));
+                                arr.add(copyFile(SPEC_FILE, SWAGGER_UI_DIR + "/" + SPEC_FILE));
+                                Single.concat(arr).subscribe(res -> {
+                                    router.route("/*").handler(StaticHandler.create(SWAGGER_UI_DIR));
+                                    logger.info("Created swagger-ui endpoint successfully");
+                                }, e -> logger.error("Failed to create swagger-ui endpoint, exception = {}", e));
+                            });
 
                     router.errorHandler(404, routingContext -> {
                         JsonObject errorObject = new JsonObject();
@@ -199,97 +205,42 @@ public class OpenApiSpecLoader {
         return new JsonObject().put("data", sensors);
     }
 
-//    private Single<Future<Void>> loadWebJar(String source, String dest) {
-//        return Single.defer(() -> Single.just(vertx.fileSystem().mkdir(dest).onSuccess(r -> {
-//            vertx.fileSystem().exists(source, exists -> {
-//                if (exists.result()) {
-//                    try {
-//                        Single.just(vertx.fileSystem().copyRecursive(source, dest, true, res -> {
-//                            logger.info("Successfully copied source = {} to destination = {}", source, dest);
-//                        }));
-//                    } catch (Exception e) {
-//                        logger.error("Unable to copy source = {} to destination = {}, excetion = {}", source, dest, e);
-//                    }
-//                } else {
-//                    logger.error("Could not find source webjar location = {}", source);
-//                }
-//            });
-//        }).onFailure(e -> logger.error("Unable to create destination directory = {}", dest))));
-//    }
-
-
-    private Single<FileSystem> loadWebJars(String source, String dest, Handler<AsyncResult<Void>> handler) {
-        return Single.defer(() -> Single.just(vertx.fileSystem().mkdir(dest))
-                .doOnSuccess(r -> {
-                    logger.info("Created directory = {}", dest);
-                    Single<Boolean> b = vertx.fileSystem().rxExists(source);
-                    vertx.fileSystem().rxExists(source)
-                            .subscribe(exists -> {
-                                if (exists) {
-                                    logger.info("Copying from directory {}", source);
-                                    vertx.fileSystem().rxCopyRecursive(source, dest, true)
-                                            .andThen(Single.just(true))
-                                            .subscribe(s -> {
-                                                logger.info("Copied files from {} to destination = {}", source, dest);
-                                                if (handler != null) {
-                                                    handler.handle(null);
-                                                }
-                                            }, e -> logger.error("Failed to copy files from {} to {}, reason = {}", source, dest, e));
-                                } else {
-                                    logger.error("Source directory {} does not exist", source);
-                                }
-                            });
-                }));
+    private Single<File> loadWebJars(String source, String dest, Handler<AsyncResult<Void>> handler) {
+        return createDirectory(dest)
+                .flatMap(r -> fileExists(source))
+                .flatMap(exist -> {
+                    if(exist) {
+                        logger.info("Copying from directory {}", source);
+                        return copyFiles(source, dest);
+                    } else {
+                        logger.error("Directory {} not found", source);
+                        return null;
+                    }
+                });
     }
 
-
-    private Single<Object> loadWebJars2(String source, String dest, Handler<AsyncResult<Void>> handler) {
-        return Single.defer(() -> Single.just(vertx.fileSystem().rxMkdir(dest))
-                .map(r -> {
-                    logger.info("Created directory = {}", dest);
-                    return vertx.fileSystem().rxExists(source)
-                            .map(exists -> {
-                                if (exists) {
-                                    logger.info("Copying from directory {}", source);
-                                    return Single.just(vertx.fileSystem().rxCopyRecursive(source, dest, true));
-                                } else {
-                                    logger.error("Source directory {} does not exist", source);
-                                    return Single.just(dest);
-                                }
-                            });
-                }));
+    // Todo - move file manipulation methods into a util class
+    private Single<File> createDirectory(String dest) {
+        return vertx.fileSystem().rxMkdir(dest)
+                .andThen(Single.just(new File(dest)));
+    }
+    private Single<Boolean> fileExists(String filePath) {
+        return vertx.fileSystem().rxExists(filePath);
     }
 
-    private void copyFile(String sourceFilePath, String destFilePath) {
-        vertx.fileSystem().copy(sourceFilePath, destFilePath, r -> {
-            if (r.succeeded()) {
-                logger.info("Copied {} to {}", sourceFilePath, destFilePath);
-            } else if (r.failed()) {
-                logger.error("Failed to copy {} to {}", sourceFilePath, destFilePath);
-            }
-        });
+    private Single<File> copyFiles(String source, String dest) {
+        return vertx.fileSystem().rxCopyRecursive(source, dest, true)
+                .andThen(Single.just(new File(dest)));
     }
 
-    private void replaceFile(String sourceFilePath, String toReplaceFilePath) {
-        vertx.fileSystem().delete(toReplaceFilePath, r -> {
-            if (r.succeeded()) {
-                logger.info("Removed {}", toReplaceFilePath);
-                copyFile(sourceFilePath, toReplaceFilePath);
-            } else if (r.failed()) {
-                logger.error("Failed to remove {}", toReplaceFilePath);
-            }
-        });
-    }
-
-    private Single<File> copyFileRx(String sourceFilePath, String destFilePath) {
+    private Single<File> copyFile(String sourceFilePath, String destFilePath) {
         return vertx.fileSystem().rxCopy(sourceFilePath, destFilePath)
                 .andThen(Single.just(new File(destFilePath)));
     }
 
-    private Single<File> replaceFileRx(String sourceFilePath, String destFilePath) {
+    private Single<File> replaceFile(String sourceFilePath, String destFilePath) {
         return vertx.fileSystem().rxDelete(destFilePath)
-                .andThen(copyFileRx(sourceFilePath, destFilePath));
+                .andThen(copyFile(sourceFilePath, destFilePath));
     }
-
 
 }

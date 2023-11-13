@@ -13,3 +13,5 @@ buildNumber.properties
 .idea/
 main.iml
 test.iml
+
+.swagger-ui/
