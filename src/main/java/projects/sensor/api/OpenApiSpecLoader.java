@@ -19,11 +19,11 @@ import io.vertx.reactivex.core.Vertx;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
+import projects.sensor.api.util.FileUtil;
 import projects.sensor.model.DataPoint;
 import projects.sensor.model.Sensor;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Date;
 
 public class OpenApiSpecLoader {
@@ -143,13 +143,13 @@ public class OpenApiSpecLoader {
                      * Replaces swagger-initializer.js with a version that points to api.yaml
                      * Creates the swagger-ui endpoint
                      */
-                    loadWebJars("META-INF/resources/webjars/swagger-ui/5.9.0", SWAGGER_UI_DIR, null)
+                    loadWebJars("META-INF/resources/webjars/swagger-ui/5.9.0", SWAGGER_UI_DIR)
                             .doOnError(e -> logger.error("Failed to create swagger-ui endpoint, exception = {}", e))
                             .subscribe(r -> {
-                                ArrayList<Single<File>> arr = new ArrayList<>();
-                                arr.add(replaceFile("swagger-initializer-override.js", SWAGGER_UI_DIR + "/swagger-initializer.js"));
-                                arr.add(copyFile(SPEC_FILE, SWAGGER_UI_DIR + "/" + SPEC_FILE));
-                                Single.concat(arr).subscribe(res -> {
+                                Single.concat(
+                                        FileUtil.replaceFile(vertx.fileSystem(), "swagger-initializer-override.js", SWAGGER_UI_DIR + "/swagger-initializer.js"),
+                                        FileUtil.copyFile(vertx.fileSystem(), SPEC_FILE, SWAGGER_UI_DIR + "/" + SPEC_FILE)
+                                ).subscribe(res -> {
                                     router.route("/*").handler(StaticHandler.create(SWAGGER_UI_DIR));
                                     logger.info("Created swagger-ui endpoint successfully");
                                 }, e -> logger.error("Failed to create swagger-ui endpoint, exception = {}", e));
@@ -181,6 +181,7 @@ public class OpenApiSpecLoader {
                     // Something went wrong during router builder initialization
                     logger.error("OpenApiSpecLoader - Failed to load spec!");
                 });
+
     }
 
     // Mock a response
@@ -205,13 +206,13 @@ public class OpenApiSpecLoader {
         return new JsonObject().put("data", sensors);
     }
 
-    private Single<File> loadWebJars(String source, String dest, Handler<AsyncResult<Void>> handler) {
-        return createDirectory(dest)
-                .flatMap(r -> fileExists(source))
+    private Single<File> loadWebJars(String source, String dest) {
+        return FileUtil.createDirectory(vertx.fileSystem(), dest)
+                .flatMap(fileSystem -> FileUtil.fileExists(vertx.fileSystem(), source))
                 .flatMap(exist -> {
                     if(exist) {
-                        logger.info("Copying from directory {}", source);
-                        return copyFiles(source, dest);
+                        logger.info("Copying from {} to {}", source, dest);
+                        return FileUtil.copyFiles(vertx.fileSystem(), source, dest);
                     } else {
                         logger.error("Directory {} not found", source);
                         return null;
@@ -219,28 +220,7 @@ public class OpenApiSpecLoader {
                 });
     }
 
-    // Todo - move file manipulation methods into a util class
-    private Single<File> createDirectory(String dest) {
-        return vertx.fileSystem().rxMkdir(dest)
-                .andThen(Single.just(new File(dest)));
-    }
-    private Single<Boolean> fileExists(String filePath) {
-        return vertx.fileSystem().rxExists(filePath);
-    }
 
-    private Single<File> copyFiles(String source, String dest) {
-        return vertx.fileSystem().rxCopyRecursive(source, dest, true)
-                .andThen(Single.just(new File(dest)));
-    }
 
-    private Single<File> copyFile(String sourceFilePath, String destFilePath) {
-        return vertx.fileSystem().rxCopy(sourceFilePath, destFilePath)
-                .andThen(Single.just(new File(destFilePath)));
-    }
-
-    private Single<File> replaceFile(String sourceFilePath, String destFilePath) {
-        return vertx.fileSystem().rxDelete(destFilePath)
-                .andThen(copyFile(sourceFilePath, destFilePath));
-    }
 
 }
