@@ -1,18 +1,27 @@
 package projects.sensor.api;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 
-import projects.sensor.api.database.SqliteDatabase;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
+import projects.sensor.db.SqliteUtil;
 
 import static org.junit.Assert.assertTrue;
 
-
+@RunWith(MockitoJUnitRunner.class)
 public class TestBase {
+
+    private OpenApiRouter router;
+
+    private static String databasePath = System.getProperty("user.dir") + "/target/db/test.db";
+    private static String databaseUrl = "jdbc:sqlite:" + databasePath;
+    private static final String databaseDriverClass = "org.sqlite.jdbcDriver";
 
     @Before
     public void setup(){
-        SqliteDatabase.createNewDatabase("test.db");
+        SqliteUtil.createTables(databaseUrl);
+        router = new OpenApiRouter();
+        router.loadSpec();
     }
 
     @Test
@@ -20,9 +29,10 @@ public class TestBase {
         assertTrue( true );
     }
 
-    // Todo - Create table in the Sqlite database and populate with data
-    protected void setupDatabase() {
 
+    @After
+    public void tearDownDB() {
+        SqliteUtil.dropTables(databaseUrl);
     }
 
 }

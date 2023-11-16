@@ -179,7 +179,7 @@ components:
         - location
         - startDate
       properties:
-        name:
+        id:
           type: string
         location:
           type: string

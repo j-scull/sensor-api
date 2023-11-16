@@ -1,8 +1,6 @@
 package projects.sensor.api;
 
 import io.reactivex.Single;
-import io.vertx.core.AsyncResult;
-import io.vertx.core.Handler;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
@@ -16,17 +14,19 @@ import io.vertx.ext.web.validation.RequestParameters;
 import io.vertx.ext.web.validation.ValidationHandler;
 import io.vertx.reactivex.core.Vertx;
 
+import io.vertx.reactivex.ext.sql.SQLClient;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
 import projects.sensor.api.util.FileUtil;
+import projects.sensor.db.DatabaseClient;
 import projects.sensor.model.DataPoint;
 import projects.sensor.model.Sensor;
 
 import java.io.File;
 import java.util.Date;
 
-public class OpenApiSpecLoader {
+public class OpenApiRouter {
 
     private static final String SPEC_FILE = "api.yaml";
     private static final String SWAGGER_UI_DIR = "swagger-ui";
@@ -34,14 +34,24 @@ public class OpenApiSpecLoader {
 
     private Vertx vertx;
 
+    private SQLClient sqlClient;
+
     private final Logger logger = LoggerFactory.getLogger(App.class);
 
-    public OpenApiSpecLoader() {
+    public OpenApiRouter() {
         vertx = Vertx.vertx();
+
+        // Todo - these fields should be read from config
+        String databasePath = System.getProperty("user.dir") + "/target/db/test.db";
+        String databaseUrl = "jdbc:sqlite:" + databasePath;
+        String databaseDriverClass = "org.sqlite.jdbcDriver";
+
+        // Todo keep all database implementation within DataBaseClient
+        sqlClient = DatabaseClient.getInstance().connectToDatabase(vertx, databaseUrl, databaseDriverClass);
     }
 
     public void loadSpec() {
-        logger.info("OpenApiSpecLoader - Loading spec {}", SPEC_FILE);
+        logger.info("OpenApiRouter- Loading spec {}", SPEC_FILE);
         RouterBuilder.create(vertx.getDelegate(), SPEC_FILE)
                 .onSuccess(routerBuilder -> {
 
@@ -72,7 +82,7 @@ public class OpenApiSpecLoader {
                                         .setStatusCode(400)
                                         .setStatusMessage("Bad Request")
                                         .end();
-                                logger.info("OpenApiSpecLoader - {} error", operation.getString("operationId"));
+                                logger.info("OpenApiRouter- {} error", operation.getString("operationId"));
                             });
 
                     routerBuilder.operation("listDataPoints")
@@ -93,7 +103,7 @@ public class OpenApiSpecLoader {
                                         .setStatusCode(400)
                                         .setStatusMessage("Bad Request")
                                         .end();
-                                logger.info("OpenApiSpecLoader - {} error", operation.getString("operationId"));
+                                logger.info("OpenApiRouter- {} error", operation.getString("operationId"));
                             });
 
                     routerBuilder.operation("dataPointsRange")
@@ -114,7 +124,7 @@ public class OpenApiSpecLoader {
                                         .setStatusCode(400)
                                         .setStatusMessage("Bad Request")
                                         .end();
-                                logger.info("OpenApiSpecLoader - {} error", operation.getString("operationId"));
+                                logger.info("OpenApiRouter- {} error", operation.getString("operationId"));
                             });
 
                     routerBuilder.operation("listSensors")
@@ -131,7 +141,7 @@ public class OpenApiSpecLoader {
                                         .setStatusCode(400)
                                         .setStatusMessage("Bad Request")
                                         .end();
-                                logger.info("OpenApiSpecLoader - {} error", operation.getString("operationId"));
+                                logger.info("OpenApiRouter- {} error", operation.getString("operationId"));
                             });
 
                     // Generate the router
@@ -172,14 +182,14 @@ public class OpenApiSpecLoader {
                             .setPort(PORT)
                             .setHost("localhost"));
                     server.requestHandler(router).listen().onSuccess(r ->
-                            logger.info("OpenApiSpecLoader - Started listening on port {}", PORT));
+                            logger.info("OpenApiRouter- Started listening on port {}", PORT));
 
-                    logger.info("OpenApiSpecLoader - Spec loaded successfully");
+                    logger.info("OpenApiRouter- Spec loaded successfully");
 
                 })
                 .onFailure(err -> {
                     // Something went wrong during router builder initialization
-                    logger.error("OpenApiSpecLoader - Failed to load spec!");
+                    logger.error("OpenApiRouter- Failed to load spec!");
                 });
 
     }
