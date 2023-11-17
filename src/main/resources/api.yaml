@@ -7,122 +7,134 @@ info:
 servers:
   - url: http://sensor-api/v1
 paths:
-  /update:
+  /logData/{sensorId}:    # Todo - update to use apiKey
     post:
-      summary: Log temperatre and humidity data
+      summary: Log temperature and humidity data.
       operationId: logData
 #      security:
 #        - api_key: []
       tags:
-        - update
+        - logData
       parameters:
+        - name: sensorId
+          in: path
+          description: Log data recorded by this sensor.
+          required: true
+          schema:
+            type: string
         - name: temperature
           in: query
-          description: temperature to be logged
+          description: Temperature to be logged.
           required: true
           schema:
             type: integer
             format: int32
         - name: humidity
           in: query
-          description: humidity to be logged
+          description: Humidity to be logged.
           required: true
           schema:
             type: integer
             format: int32
       responses:
         201:
-          description: Null response
+          description: Null response.
         default:
-          description: unexpected error
+          description: Unexpected error.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
 
-  /dataPoints/{sensorId}:
+  /getData/{sensorId}:
     get:
-      summary: List dataPoints for a specified period
-      operationId: listDataPoints
+      summary: Get all logged data for a specified sensorId and date.
+      operationId: getData
 #      security:
 #        - api_key: []
       tags:
-        - dataPoints
+        - getData
       parameters:
         - name: sensorId
           in: path
-          description: Get datapoints logged by this sensor
+          description: Get data logged by this sensor.
           required: true
           schema:
             type: string
         - name: year
           in: query
-          description: Get dataPoints for this year
+          description: Get data for this year.
           required: true
           schema:
             type: string
         - name: month
           in: query
-          description: Get dataPoints for this month
+          description: Get data for this month.
           required: true
           schema:
             type: string
         - name: date
           in: query
-          description: Get dataPoints for this date of month
+          description: Get data for this date of month.
+          required: true
+          schema:
+            type: string
+        - name: hour
+          in: query
+          description: Get data for this hour, 24 hour format.
           required: false
           schema:
             type: string
       responses:
         200:
-          description: An array of dataPoints
+          description: An array of dataPoints.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/DataPoints"
+                $ref: "#/components/schemas/DataArray"
         default:
-          description: unexpected error
+          description: Unexpected error.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
     
-  /dataPoints/{sensorId}/range:
+  /getData/{sensorId}/range:
     get:
-      summary: List dataPoints for a specified time range
-      operationId: dataPointsRange
+      summary: Get all logged data for a specified sensorId within a specified time range.
+      operationId: getDataRange
 #      security:
 #        - api_key: []
       tags:
-        - dataPointsRange
+        - getDataRange
       parameters:
         - name: sensorId
           in: path
-          description: Get datapoints logged by this sensor
+          description: Get data logged by this sensor.
           required: true
           schema:
             type: string
         - name: start
           in: query
           required: true
-          description: Get data from this time
+          description: Get data from this time.
           schema:
             type: string
         - name: stop
           in: query
           required: true
-          description: Get data up until this time 
+          description: Get data up until this time .
           schema:
             type: string
       responses:
-        200:
-          description: Expected response to a valid request
+        201:
+          description: Expected response to a valid request.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/DataPoints"
+                $ref: "#/components/schemas/DataArray"
         default:
-          description: unexpected error
+          description: Unexpected error.
           content:
             application/json:
               schema:
@@ -130,21 +142,76 @@ paths:
                 
   /sensors:
     get:
-      summary: List sensors that log data
+      summary: List all sensors.
       operationId: listSensors
 #      security:
 #        - api_key: []
       tags:
-        - sensors
+        - listSensors
       responses:
         200:
-          description: Expected response to a valid request
+          description: Expected response to a valid request.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Sensors"
+                $ref: "#/components/schemas/ListSensorsResponse"
         default:
-          description: unexpected error
+          description: Unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /sensor/{sensorId}:
+    get:
+      summary: Get info on specified sensor.
+      operationId: getSensor
+      #      security:
+      #        - api_key: []
+      tags:
+        - getSensor
+      parameters:
+        - name: sensorId
+          in: path
+          description: Get info on this sensor.
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Expected response to a valid request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetSensorResponse"
+        default:
+          description: Unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /sensors/add:
+    post:
+      summary: Register a new sensor.
+      operationId: addSensor
+      #      security:
+      #        - api_key: []
+      tags:
+        - addSensor
+      requestBody:
+        description: Optional description in *Markdown*
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddSensorRequest'
+
+      responses:
+        201:
+          description: Null response.
+        default:
+          description: Unexpected error.
           content:
             application/json:
               schema:
@@ -153,7 +220,7 @@ paths:
     
 components:
   schemas:
-    DataPoint:
+    Data:
       type: object
       required:
         - temperature
@@ -168,11 +235,11 @@ components:
           format: int32
         dateTime:
           type: string
-    DataPoints:
+    DataArray:
       type: array
       items:
-        $ref: "#/components/schemas/DataPoint"
-    Sensor:
+        $ref: "#/components/schemas/Data"
+    GetSensorResponse:
       type: object
       required:
         - id
@@ -185,10 +252,20 @@ components:
           type: string
         startDate:
           type: string
-    Sensors:
+    ListSensorsResponse:
       type: array
       items:
-        $ref: '#/components/schemas/Sensor'
+        $ref: '#/components/schemas/GetSensorResponse'
+    AddSensorRequest:
+      type: object
+      required:
+        - id
+        - location
+      properties:
+        id:
+          type: string
+        location:
+          type: string
     Error:
       type: object
       required:
