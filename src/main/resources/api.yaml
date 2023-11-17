@@ -7,7 +7,7 @@ info:
 servers:
   - url: http://sensor-api/v1
 paths:
-  /logData/{sensorId}:    # Todo - update to use apiKey
+  /logData:    # Todo - update to use apiKey
     post:
       summary: Log temperature and humidity data.
       operationId: logData
@@ -15,27 +15,13 @@ paths:
 #        - api_key: []
       tags:
         - logData
-      parameters:
-        - name: sensorId
-          in: path
-          description: Log data recorded by this sensor.
-          required: true
-          schema:
-            type: string
-        - name: temperature
-          in: query
-          description: Temperature to be logged.
-          required: true
-          schema:
-            type: integer
-            format: int32
-        - name: humidity
-          in: query
-          description: Humidity to be logged.
-          required: true
-          schema:
-            type: integer
-            format: int32
+      requestBody:
+        description: Request body containing sensorId with recorded temperature and humidity.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DataRequest'
       responses:
         201:
           description: Null response.
@@ -91,7 +77,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/DataArray"
+                $ref: "#/components/schemas/DataResponseArray"
         default:
           description: Unexpected error.
           content:
@@ -132,7 +118,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/DataArray"
+                $ref: "#/components/schemas/DataResponseArray"
         default:
           description: Unexpected error.
           content:
@@ -200,7 +186,7 @@ paths:
       tags:
         - addSensor
       requestBody:
-        description: Optional description in *Markdown*
+        description: Request body containing new sensorId and location.
         required: true
         content:
           application/json:
@@ -220,7 +206,22 @@ paths:
     
 components:
   schemas:
-    Data:
+    DataRequest:
+      type: object
+      required:
+        - sensorId
+        - temperature
+        - humidity
+      properties:
+        sensorId:
+          type: string
+        temperature:
+          type: integer
+          format: int32
+        humidity:
+          type: integer
+          format: int32
+    DataResponse:
       type: object
       required:
         - temperature
@@ -235,18 +236,18 @@ components:
           format: int32
         dateTime:
           type: string
-    DataArray:
+    DataResponseArray:
       type: array
       items:
-        $ref: "#/components/schemas/Data"
+        $ref: "#/components/schemas/DataResponse"
     GetSensorResponse:
       type: object
       required:
-        - id
+        - sensorId
         - location
         - startDate
       properties:
-        id:
+        sensorId:
           type: string
         location:
           type: string
@@ -259,10 +260,10 @@ components:
     AddSensorRequest:
       type: object
       required:
-        - id
+        - sensorId
         - location
       properties:
-        id:
+        sensorId:
           type: string
         location:
           type: string

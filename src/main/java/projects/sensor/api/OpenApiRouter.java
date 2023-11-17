@@ -22,7 +22,7 @@ import org.slf4j.Logger;
 
 import projects.sensor.api.util.FileUtil;
 import projects.sensor.db.DatabaseClient;
-import projects.sensor.model.Data;
+import projects.sensor.model.DataResponse;
 import projects.sensor.model.GetSensorResponse;
 
 import java.io.File;
@@ -70,9 +70,12 @@ public class OpenApiRouter {
                     routerBuilder.operation("logData")
                             .handler(routingContext -> {
                                 RequestParameters params = routingContext.get(ValidationHandler.REQUEST_CONTEXT_KEY);
-                                RequestParameter sensorId = params.queryParameter("sensorId");
-                                RequestParameter temperature = params.queryParameter("temperature");
-                                RequestParameter humidity = params.queryParameter("humidity");
+                                RequestParameter body = params.body();
+                                logger.info("logData - body = {}", body);
+                                JsonObject jsonBody = body.getJsonObject();
+                                String sensorId = jsonBody.getString("sensorId");
+                                String temperature = jsonBody.getString("temperature");
+                                String humidity = jsonBody.getString("humidity");
                                 Date dateTime = new Date();
                                 logger.info("logData - sensorId = {}, temperature = {}, humidity = {}, time = {}", sensorId, temperature, humidity, dateTime);
                                 routingContext.response()
@@ -85,7 +88,7 @@ public class OpenApiRouter {
                                         .setStatusCode(400)
                                         .setStatusMessage("Bad Request")
                                         .end();
-                                logger.info("OpenApiRouter- {} error", operation.getString("operationId"));
+                                logger.error("OpenApiRouter - {} error - {}", operation.getString("operationId"), routingContext.failure());
                             });
 
                     routerBuilder.operation("getData")
@@ -111,7 +114,7 @@ public class OpenApiRouter {
                                         .setStatusCode(400)
                                         .setStatusMessage("Bad Request")
                                         .end();
-                                logger.info("OpenApiRouter- {} error", operation.getString("operationId"));
+                                logger.error("OpenApiRouter - {} error - {}", operation.getString("operationId"), routingContext.failure());
                             });
 
                     routerBuilder.operation("getDataRange")
@@ -132,7 +135,7 @@ public class OpenApiRouter {
                                         .setStatusCode(400)
                                         .setStatusMessage("Bad Request")
                                         .end();
-                                logger.info("OpenApiRouter- {} error", operation.getString("operationId"));
+                                logger.error("OpenApiRouter - {} error - {}", operation.getString("operationId"), routingContext.failure());
                             });
 
                     routerBuilder.operation("listSensors")
@@ -149,7 +152,7 @@ public class OpenApiRouter {
                                         .setStatusCode(400)
                                         .setStatusMessage("Bad Request")
                                         .end();
-                                logger.info("OpenApiRouter- {} error", operation.getString("operationId"));
+                                logger.error("OpenApiRouter - {} error - {}", operation.getString("operationId"), routingContext.failure());
                             });
 
                     routerBuilder.operation("getSensor")
@@ -167,7 +170,7 @@ public class OpenApiRouter {
                                         .setStatusCode(400)
                                         .setStatusMessage("Bad Request")
                                         .end();
-                                logger.info("OpenApiRouter- {} error", operation.getString("operationId"));
+                                logger.error("OpenApiRouter - {} error - {}", operation.getString("operationId"), routingContext.failure());
                             });
 
                     routerBuilder.operation("addSensor")
@@ -187,7 +190,7 @@ public class OpenApiRouter {
                                         .setStatusCode(400)
                                         .setStatusMessage("Bad Request")
                                         .end();
-                                logger.info("OpenApiRouter- {} error", operation.getString("operationId"));
+                                logger.error("OpenApiRouter - {} error - {}", operation.getString("operationId"), routingContext.failure());
                             });
 
                     // Generate the router
@@ -243,11 +246,11 @@ public class OpenApiRouter {
     // Mock a response
     private JsonObject getDataMock() {
         int n = 4;
-        Data[] dataPoints = new Data[n];//
+        DataResponse[] dataPoints = new DataResponse[n];//
         for (int i = 0; i < n; i++) {
             int temperature = (int) (Math.random() * 30);
             int humidity = (int) (Math.random() * 100);
-            dataPoints[i] = new Data(temperature, humidity, String.valueOf(i));
+            dataPoints[i] = new DataResponse(temperature, humidity, String.valueOf(i));
         }
         return new JsonObject().put("data", dataPoints);
     }
