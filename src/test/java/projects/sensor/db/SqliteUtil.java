@@ -21,7 +21,7 @@ public class SqliteUtil {
         // location - string
         // creationTime - timestamp
         String sensorTableQuery = "CREATE TABLE IF NOT EXISTS sensor_info (\n"
-                + "	id VARCHAR(36) NOT NULL PRIMARY KEY,\n"
+                + "	sensorId VARCHAR(36) NOT NULL PRIMARY KEY,\n"
                 + "	location VARCHAR(36) NOT NULL,\n"
                 + "	creationTime TIMESTAMP NOT NULL\n"
                 + ");";
@@ -32,11 +32,11 @@ public class SqliteUtil {
         // temperature - int
         // humidity - int
         String dataTableQuery = "CREATE TABLE IF NOT EXISTS temperature_and_humidity (\n"
-                + "	id VARCHAR(36) NOT NULL,\n"
-                + "	time TIMESTAMP NOT NULL,\n"
+                + "	sensorId VARCHAR(36) NOT NULL,\n"
                 + "	temperature int NOT NULL,\n"
                 + "	humidity int NOT NULL,\n"
-                + " PRIMARY KEY (id, time)\n"
+                + "	time TIMESTAMP NOT NULL,\n"
+                + " PRIMARY KEY (sensorId, time)\n"
                 + ");";
 
         try (Connection conn = DriverManager.getConnection(url);

@@ -30,9 +30,9 @@ public class TestBase {
     }
 
 
-    @After
-    public void tearDownDB() {
-        SqliteUtil.dropTables(databaseUrl);
-    }
+//    @After
+//    public void tearDownDB() {
+//        SqliteUtil.dropTables(databaseUrl);
+//    }
 
 }

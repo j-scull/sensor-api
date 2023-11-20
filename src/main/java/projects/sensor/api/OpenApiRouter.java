@@ -4,9 +4,7 @@ import io.reactivex.Single;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
-import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.RequestBody;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.StaticHandler;
 import io.vertx.ext.web.openapi.RouterBuilder;
@@ -16,7 +14,6 @@ import io.vertx.ext.web.validation.RequestParameters;
 import io.vertx.ext.web.validation.ValidationHandler;
 import io.vertx.reactivex.core.Vertx;
 
-import io.vertx.reactivex.ext.sql.SQLClient;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
@@ -26,7 +23,7 @@ import projects.sensor.model.DataResponse;
 import projects.sensor.model.GetSensorResponse;
 
 import java.io.File;
-import java.util.Date;
+import java.sql.Timestamp;
 
 public class OpenApiRouter {
 
@@ -36,7 +33,7 @@ public class OpenApiRouter {
 
     private Vertx vertx;
 
-    private SQLClient sqlClient;
+    private DatabaseClient databaseClient;
 
     private final Logger logger = LoggerFactory.getLogger(App.class);
 
@@ -46,10 +43,11 @@ public class OpenApiRouter {
         // Todo - these fields should be read from config
         String databasePath = System.getProperty("user.dir") + "/target/db/test.db";
         String databaseUrl = "jdbc:sqlite:" + databasePath;
-        String databaseDriverClass = "org.sqlite.jdbcDriver";
+        String databaseDriverClass = "org.sqlite.JDBC";
 
         // Todo keep all database implementation within DataBaseClient
-        sqlClient = DatabaseClient.getInstance().connectToDatabase(vertx, databaseUrl, databaseDriverClass);
+        databaseClient = DatabaseClient.getInstance();
+        databaseClient.connectToDatabase(vertx, databaseUrl, databaseDriverClass);
     }
 
     public void loadSpec() {
@@ -75,8 +73,10 @@ public class OpenApiRouter {
                                 String sensorId = jsonBody.getString("sensorId");
                                 String temperature = jsonBody.getString("temperature");
                                 String humidity = jsonBody.getString("humidity");
-                                Date dateTime = new Date();
-                                logger.info("logData - sensorId = {}, temperature = {}, humidity = {}, time = {}", sensorId, temperature, humidity, dateTime);
+                                long time = new Timestamp(System.currentTimeMillis()).getTime();
+                                logger.info("logData - sensorId = {}, temperature = {}, humidity = {}, time = {}", sensorId, temperature, humidity, time);  // Todo - change log level to debug
+                                jsonBody.put("time", time);
+                                this.databaseClient.logData(jsonBody);
                                 routingContext.response()
                                         .setStatusCode(201)
                                         .setStatusMessage("OK")
