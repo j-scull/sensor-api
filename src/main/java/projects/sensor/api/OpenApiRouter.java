@@ -53,7 +53,7 @@ public class OpenApiRouter {
     }
 
     public void loadSpec() {
-        logger.info("OpenApiRouter- Loading spec {}", SPEC_FILE);
+        logger.info("OpenApiRouter - Loading spec {}", SPEC_FILE);
         RouterBuilder.create(vertx.getDelegate(), SPEC_FILE)
                 .onSuccess(routerBuilder -> {
 
@@ -71,7 +71,6 @@ public class OpenApiRouter {
                             .handler(routingContext -> {
                                 RequestParameters params = routingContext.get(ValidationHandler.REQUEST_CONTEXT_KEY);
                                 RequestParameter body = params.body();
-                                logger.info("logData - body = {}", body);
                                 JsonObject jsonBody = body.getJsonObject();
                                 String sensorId = jsonBody.getString("sensorId");
                                 String temperature = jsonBody.getString("temperature");
@@ -88,7 +87,7 @@ public class OpenApiRouter {
                                         .setStatusCode(400)
                                         .setStatusMessage("Bad Request")
                                         .end();
-                                logger.error("OpenApiRouter - {} error - {}", operation.getString("operationId"), routingContext.failure());
+                                logger.error("{} error - {}", operation.getString("operationId"), routingContext.failure());
                             });
 
                     routerBuilder.operation("getData")
@@ -100,9 +99,9 @@ public class OpenApiRouter {
                                 RequestParameter date = params.queryParameter("date");
                                 RequestParameter hour = params.queryParameter("hour");
                                 if (hour != null) {
-                                    logger.info("listDataPoints - sensorId = {}, year = {}, month = {}, date = {}, hour = {}", sensorId, year, month, date, hour);
+                                    logger.info("getData - sensorId = {}, year = {}, month = {}, date = {}, hour = {}", sensorId, year, month, date, hour);
                                 } else {
-                                    logger.info("listDataPoints - sensorId = {}, year = {}, month = {}, date = {}", sensorId, year, month, date);
+                                    logger.info("getData - sensorId = {}, year = {}, month = {}, date = {}", sensorId, year, month, date);
                                 }
                                 routingContext.response()
                                         .setStatusCode(200)
@@ -114,7 +113,7 @@ public class OpenApiRouter {
                                         .setStatusCode(400)
                                         .setStatusMessage("Bad Request")
                                         .end();
-                                logger.error("OpenApiRouter - {} error - {}", operation.getString("operationId"), routingContext.failure());
+                                logger.error("{} error - {}", operation.getString("operationId"), routingContext.failure());
                             });
 
                     routerBuilder.operation("getDataRange")
@@ -123,7 +122,7 @@ public class OpenApiRouter {
                                 RequestParameter sensorId = params.pathParameter("sensorId");
                                 RequestParameter start = params.queryParameter("start");
                                 RequestParameter stop = params.queryParameter("stop");
-                                logger.info("listDataPoints - sensorId = {}, start = {}, stop = {}", sensorId, start, stop);
+                                logger.info("getDataRange - sensorId = {}, start = {}, stop = {}", sensorId, start, stop);
 
                                 routingContext.response()
                                         .setStatusCode(200)
@@ -135,7 +134,7 @@ public class OpenApiRouter {
                                         .setStatusCode(400)
                                         .setStatusMessage("Bad Request")
                                         .end();
-                                logger.error("OpenApiRouter - {} error - {}", operation.getString("operationId"), routingContext.failure());
+                                logger.error("{} error - {}", operation.getString("operationId"), routingContext.failure());
                             });
 
                     routerBuilder.operation("listSensors")
@@ -152,13 +151,13 @@ public class OpenApiRouter {
                                         .setStatusCode(400)
                                         .setStatusMessage("Bad Request")
                                         .end();
-                                logger.error("OpenApiRouter - {} error - {}", operation.getString("operationId"), routingContext.failure());
+                                logger.error("{} error - {}", operation.getString("operationId"), routingContext.failure());
                             });
 
                     routerBuilder.operation("getSensor")
                             .handler(routingContext -> {
                                 RequestParameters  params = routingContext.get(ValidationHandler.REQUEST_CONTEXT_KEY);
-                                RequestParameter sensorId = params.queryParameter("sensorId");
+                                RequestParameter sensorId = params.pathParameter("sensorId");
                                 logger.info("getSensor - params = {}", params);
                                 routingContext.response()
                                         .setStatusCode(200)
@@ -170,7 +169,7 @@ public class OpenApiRouter {
                                         .setStatusCode(400)
                                         .setStatusMessage("Bad Request")
                                         .end();
-                                logger.error("OpenApiRouter - {} error - {}", operation.getString("operationId"), routingContext.failure());
+                                logger.error("{} error - {}", operation.getString("operationId"), routingContext.failure());
                             });
 
                     routerBuilder.operation("addSensor")
@@ -178,19 +177,18 @@ public class OpenApiRouter {
                                 RequestParameters  params = routingContext.get(ValidationHandler.REQUEST_CONTEXT_KEY);
                                 RequestParameter body = params.body();
                                 JsonObject jsonBody = body.getJsonObject();
-                                RequestParameter sensorId = params.queryParameter("sensorId");
-                                logger.info("addSensor - sensorId = {}, location = {}", jsonBody.getString("id"), jsonBody.getString("location"));
+                                logger.info("addSensor - sensorId = {}, location = {}", jsonBody.getString("sensorId"), jsonBody.getString("location"));
                                 routingContext.response()
-                                        .setStatusCode(200)
+                                        .setStatusCode(201)
                                         .setStatusMessage("OK")
-                                        .end(getSensorMock(sensorId.getString()).toBuffer());
+                                        .end();
                             }).failureHandler(routingContext -> {
                                 JsonObject operation = routingContext.get("operationModel");
                                 routingContext.response()
                                         .setStatusCode(400)
                                         .setStatusMessage("Bad Request")
                                         .end();
-                                logger.error("OpenApiRouter - {} error - {}", operation.getString("operationId"), routingContext.failure());
+                                logger.error("{} error - {}", operation.getString("operationId"), routingContext.failure());
                             });
 
                     // Generate the router
@@ -231,14 +229,14 @@ public class OpenApiRouter {
                             .setPort(PORT)
                             .setHost("localhost"));
                     server.requestHandler(router).listen().onSuccess(r ->
-                            logger.info("OpenApiRouter- Started listening on port {}", PORT));
+                            logger.info("OpenApiRouter - Started listening on port {}", PORT));
 
-                    logger.info("OpenApiRouter- Spec loaded successfully");
+                    logger.info("OpenApiRouter - Spec loaded successfully");
 
                 })
                 .onFailure(err -> {
                     // Something went wrong during router builder initialization
-                    logger.error("OpenApiRouter- Failed to load spec!");
+                    logger.error("OpenApiRouter - Failed to load spec!");
                 });
 
     }
