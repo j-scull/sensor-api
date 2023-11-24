@@ -2,6 +2,7 @@ package projects.sensor.db;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.sql.ResultSet;
 import io.vertx.reactivex.core.Vertx;
 import io.vertx.reactivex.ext.jdbc.JDBCClient;
 import io.vertx.reactivex.ext.sql.SQLClient;
@@ -61,7 +62,6 @@ public class DatabaseClient {
                 JsonArray jsonArray = new JsonArray();
                 jsonArray.add(jsonObject);
 
-
                 connection.query(sql.toString(), queryResult -> {
                     if (queryResult.succeeded()) {
                         logger.info("logData - logged data successfully");
@@ -79,7 +79,19 @@ public class DatabaseClient {
 
     // What is the return value? Data or DataResponse
     public void getData() {
+        String sql = "SELECT * FROM temperature_and_humidity";
 
+        this.sqlClient.query(sql, ar -> {
+            if (ar.succeeded()) {
+                ResultSet result = ar.result();
+                for (JsonArray jsonArray: result.getResults()) {
+                    logger.info("getData - result = {}", jsonArray);
+                }
+            } else {
+                logger.error("getData - failed to query database - {}", ar.cause());
+            }
+
+        });
     }
 
     // What is the return value? List<Data> or List<DataResponse>

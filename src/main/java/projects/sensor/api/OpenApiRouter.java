@@ -1,9 +1,11 @@
 package projects.sensor.api;
 
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.reactivex.Single;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
+import io.vertx.core.json.jackson.DatabindCodec;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.StaticHandler;
@@ -39,6 +41,9 @@ public class OpenApiRouter {
 
     public OpenApiRouter() {
         vertx = Vertx.vertx();
+
+        // allow jackson to decode java.time.LocalDateTime
+        DatabindCodec.mapper().registerModule(new JavaTimeModule());
 
         // Todo - these fields should be read from config
         String databasePath = System.getProperty("user.dir") + "/target/db/test.db";
@@ -103,6 +108,7 @@ public class OpenApiRouter {
                                 } else {
                                     logger.info("getData - sensorId = {}, year = {}, month = {}, date = {}", sensorId, year, month, date);
                                 }
+                                this.databaseClient.getData();
                                 routingContext.response()
                                         .setStatusCode(200)
                                         .setStatusMessage("OK")
