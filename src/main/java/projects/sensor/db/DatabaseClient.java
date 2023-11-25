@@ -1,5 +1,6 @@
 package projects.sensor.db;
 
+import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.sql.ResultSet;
@@ -11,6 +12,9 @@ import io.vertx.reactivex.ext.sql.SQLConnection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import projects.sensor.api.App;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class DatabaseClient {
 
@@ -77,20 +81,31 @@ public class DatabaseClient {
 
     }
 
-    // What is the return value? Data or DataResponse
-    public void getData() {
+    // Todo
+    // SELECT using params and using a prepared statement
+    // Think about returned time format - "time":[2023,11,25,22,34,10,41000000], what should be used here?
+    public void getData(HttpServerResponse response, JsonArray params) throws RuntimeException {
         String sql = "SELECT * FROM temperature_and_humidity";
+
+        Map<String, Object> parameters = new HashMap<>();
+        parameters.put("sensorId", 123);
 
         this.sqlClient.query(sql, ar -> {
             if (ar.succeeded()) {
                 ResultSet result = ar.result();
-                for (JsonArray jsonArray: result.getResults()) {
-                    logger.info("getData - result = {}", jsonArray);
+                for (JsonObject row: result.getRows()) {
+                    logger.info("getData - result = {}", row);
                 }
+                JsonObject jsonResponse = new JsonObject().put("data", result.getRows());
+                response.setStatusCode(200)
+                        .setStatusMessage("OK")
+                        .end(jsonResponse.toBuffer());
             } else {
                 logger.error("getData - failed to query database - {}", ar.cause());
+                response.setStatusCode(500)
+                        .setStatusMessage("Internal Server Error")
+                        .end();
             }
-
         });
     }
 

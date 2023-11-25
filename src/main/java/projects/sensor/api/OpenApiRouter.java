@@ -5,6 +5,7 @@ import io.reactivex.Single;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.jackson.DatabindCodec;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
@@ -26,6 +27,7 @@ import projects.sensor.model.GetSensorResponse;
 
 import java.io.File;
 import java.sql.Timestamp;
+import java.util.List;
 
 public class OpenApiRouter {
 
@@ -103,16 +105,16 @@ public class OpenApiRouter {
                                 RequestParameter month = params.queryParameter("month");
                                 RequestParameter date = params.queryParameter("date");
                                 RequestParameter hour = params.queryParameter("hour");
+                                JsonArray dbParams = new JsonArray().add(sensorId).add(year).add(month).add(date);
                                 if (hour != null) {
+                                    dbParams.add(hour);
                                     logger.info("getData - sensorId = {}, year = {}, month = {}, date = {}, hour = {}", sensorId, year, month, date, hour);
                                 } else {
                                     logger.info("getData - sensorId = {}, year = {}, month = {}, date = {}", sensorId, year, month, date);
                                 }
-                                this.databaseClient.getData();
-                                routingContext.response()
-                                        .setStatusCode(200)
-                                        .setStatusMessage("OK")
-                                        .end(getDataMock().toBuffer());
+                                this.databaseClient.getData(routingContext.response(), dbParams);
+
+
                             }).failureHandler(routingContext -> {
                                 JsonObject operation = routingContext.get("operationModel");
                                 routingContext.response()
@@ -246,6 +248,18 @@ public class OpenApiRouter {
                 });
 
     }
+
+    private void dbResponseHandler(List<JsonObject> dbResponseJson) {
+
+
+    }
+
+//    private void dbResponseHandler(RoutingContext routingContext, List<JsonObject> dbResponseJson) {
+//        routingContext.response()
+//                .setStatusCode(200)
+//                .setStatusMessage("OK")
+//                .end((Buffer)dbResponseJson);
+//    }
 
     // Mock a response
     private JsonObject getDataMock() {
