@@ -4,7 +4,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import projects.sensor.api.App;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.sql.Statement;
 
 /**
  *
@@ -23,7 +26,7 @@ public class SqliteUtil {
         String sensorTableQuery = "CREATE TABLE IF NOT EXISTS sensor_info (\n"
                 + "	sensorId VARCHAR(36) NOT NULL PRIMARY KEY,\n"
                 + "	location VARCHAR(36) NOT NULL,\n"
-                + "	creationTime TIMESTAMP NOT NULL\n"
+                + "	creationTime TEXT NOT NULL\n"        // SQLite does not support DATETIME
                 + ");";
 
         // Data table
@@ -35,13 +38,13 @@ public class SqliteUtil {
                 + "	sensorId VARCHAR(36) NOT NULL,\n"
                 + "	temperature int NOT NULL,\n"
                 + "	humidity int NOT NULL,\n"
-                + "	time TIMESTAMP NOT NULL,\n"
+                + "	time TEXT NOT NULL,\n"               // SQLite does not support DATETIME
                 + " PRIMARY KEY (sensorId, time)\n"
                 + ");";
 
         try (Connection conn = DriverManager.getConnection(url);
 
-            Statement stmt = conn.createStatement()) {
+             Statement stmt = conn.createStatement()) {
             // create a new table
             logger.info("Executing query = {}", sensorTableQuery);
             stmt.execute(sensorTableQuery);

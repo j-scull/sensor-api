@@ -27,6 +27,7 @@ import projects.sensor.model.GetSensorResponse;
 
 import java.io.File;
 import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.util.List;
 
 public class OpenApiRouter {
@@ -74,16 +75,24 @@ public class OpenApiRouter {
 
                     routerBuilder.operation("logData")
                             .handler(routingContext -> {
+
                                 RequestParameters params = routingContext.get(ValidationHandler.REQUEST_CONTEXT_KEY);
                                 RequestParameter body = params.body();
                                 JsonObject jsonBody = body.getJsonObject();
                                 String sensorId = jsonBody.getString("sensorId");
                                 String temperature = jsonBody.getString("temperature");
                                 String humidity = jsonBody.getString("humidity");
-                                long time = new Timestamp(System.currentTimeMillis()).getTime();
-                                logger.info("logData - sensorId = {}, temperature = {}, humidity = {}, time = {}", sensorId, temperature, humidity, time);  // Todo - change log level to debug
-                                jsonBody.put("time", time);
-                                this.databaseClient.logData(jsonBody);
+                                Timestamp timestamp = new java.sql.Timestamp(System.currentTimeMillis());
+                                String dateTimeString = new SimpleDateFormat("y-MM-dd HH:mm:ss").format(timestamp);
+                                logger.info("logData - sensorId = {}, temperature = {}, humidity = {}, time = {}", sensorId, temperature, humidity, dateTimeString);  // Todo - change log level to debug
+
+                                JsonArray queryParams = new JsonArray();
+                                queryParams.add(sensorId);
+                                queryParams.add(temperature);
+                                queryParams.add(humidity);
+                                queryParams.add(dateTimeString);
+                                this.databaseClient.logData(queryParams);
+
                                 routingContext.response()
                                         .setStatusCode(201)
                                         .setStatusMessage("OK")
@@ -99,21 +108,43 @@ public class OpenApiRouter {
 
                     routerBuilder.operation("getData")
                             .handler(routingContext -> {
+
                                 RequestParameters params = routingContext.get(ValidationHandler.REQUEST_CONTEXT_KEY);
                                 RequestParameter sensorId = params.pathParameter("sensorId");
-                                RequestParameter year = params.queryParameter("year");
-                                RequestParameter month = params.queryParameter("month");
-                                RequestParameter date = params.queryParameter("date");
-                                RequestParameter hour = params.queryParameter("hour");
-                                JsonArray dbParams = new JsonArray().add(sensorId).add(year).add(month).add(date);
+                                RequestParameter year = params.pathParameter("year");
+                                RequestParameter month = params.pathParameter("month");
+                                RequestParameter date = params.pathParameter("date");
+                                RequestParameter hour = params.pathParameter("hour");
+
+                                JsonArray queryParams = new JsonArray();
+                                queryParams.add(sensorId);
+                                queryParams.add(year);
+                                queryParams.add(month);
+                                queryParams.add(date);
+
+                                StringBuilder dateTimeString = new StringBuilder();
+                                dateTimeString.append(year);
+                                dateTimeString.append("-");
+                                dateTimeString.append(month);
+                                dateTimeString.append("-");
+                                dateTimeString.append(date);
+                                dateTimeString.append(" ");
+                                dateTimeString.append("-");
+
+                                // Todo - create date range
+                                // if selecting entries for 2023-11-28
+                                // SELECT WHERE date >= '2023-11-28 00:00:00' AND date < '2023-11-29 00:00:00'
+                                // if selecting entries for '2023-11-28 22:**:**'
+                                // SELECT WHERE date >= '2023-11-28 22:00:00' AND date < '2023-11-29 23:00:00'
+                                // should probably create a datetime and use a time delta if hours are involved
+
                                 if (hour != null) {
-                                    dbParams.add(hour);
+                                    queryParams.add(hour);
                                     logger.info("getData - sensorId = {}, year = {}, month = {}, date = {}, hour = {}", sensorId, year, month, date, hour);
                                 } else {
                                     logger.info("getData - sensorId = {}, year = {}, month = {}, date = {}", sensorId, year, month, date);
                                 }
-                                this.databaseClient.getData(routingContext.response(), dbParams);
-
+                                this.databaseClient.getData(routingContext.response(), queryParams);
 
                             }).failureHandler(routingContext -> {
                                 JsonObject operation = routingContext.get("operationModel");

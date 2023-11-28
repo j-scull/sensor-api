@@ -13,9 +13,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import projects.sensor.api.App;
 
-import java.util.HashMap;
-import java.util.Map;
-
 public class DatabaseClient {
 
     private static final Logger logger = LoggerFactory.getLogger(App.class);
@@ -43,30 +40,16 @@ public class DatabaseClient {
     }
 
     // Todo - return success failure to router
-    public void logData(JsonObject jsonObject) {
-        logger.info(String.valueOf(jsonObject));
-//        String sql = "INSERT INTO temperature_and_humidity (sensorId, temperature, humidity, time) VALUES (?, ?, ?, ?)";
-
-        // Todo - pass sql statement and parameters separately
-        StringBuilder sql = new StringBuilder();
-        sql.append("INSERT INTO temperature_and_humidity (sensorId, temperature, humidity, time) VALUES (");
-        sql.append(jsonObject.getString("sensorId"));
-        sql.append(", ");
-        sql.append(jsonObject.getString("temperature"));
-        sql.append(", ");
-        sql.append(jsonObject.getString("humidity"));
-        sql.append(", ");
-        sql.append(jsonObject.getString("time"));
-        sql.append(")");
+    public void logData(JsonArray queryParams) {
+        logger.info(String.valueOf(queryParams));
+        String query = "INSERT INTO temperature_and_humidity (sensorId, temperature, humidity, time) VALUES (?, ?, ?, ?)";
 
         this.sqlClient.getConnection(res -> {
             if (res.succeeded()) {
 
                 SQLConnection connection = res.result();
-                JsonArray jsonArray = new JsonArray();
-                jsonArray.add(jsonObject);
 
-                connection.query(sql.toString(), queryResult -> {
+                connection.updateWithParams(query, queryParams, queryResult -> {
                     if (queryResult.succeeded()) {
                         logger.info("logData - logged data successfully");
                     } else {
@@ -84,11 +67,9 @@ public class DatabaseClient {
     // Todo
     // SELECT using params and using a prepared statement
     // Think about returned time format - "time":[2023,11,25,22,34,10,41000000], what should be used here?
-    public void getData(HttpServerResponse response, JsonArray params) throws RuntimeException {
+    public void getData(HttpServerResponse response, JsonArray queryParams) throws RuntimeException {
         String sql = "SELECT * FROM temperature_and_humidity";
 
-        Map<String, Object> parameters = new HashMap<>();
-        parameters.put("sensorId", 123);
 
         this.sqlClient.query(sql, ar -> {
             if (ar.succeeded()) {
