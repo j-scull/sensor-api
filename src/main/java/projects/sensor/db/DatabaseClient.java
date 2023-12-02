@@ -68,12 +68,14 @@ public class DatabaseClient {
     // SELECT using params and using a prepared statement
     // Think about returned time format - "time":[2023,11,25,22,34,10,41000000], what should be used here?
     public void getData(HttpServerResponse response, JsonArray queryParams) throws RuntimeException {
-        String sql = "SELECT * FROM temperature_and_humidity";
 
+        logger.info("getData - queryParams = {}", queryParams);
 
-        this.sqlClient.query(sql, ar -> {
-            if (ar.succeeded()) {
-                ResultSet result = ar.result();
+        String query = "SELECT * FROM temperature_and_humidity WHERE time >= ? AND time < ?";
+
+        this.sqlClient.queryWithParams(query, queryParams, queryResult -> {
+            if (queryResult.succeeded()) {
+                ResultSet result = queryResult.result();
                 for (JsonObject row: result.getRows()) {
                     logger.info("getData - result = {}", row);
                 }
@@ -82,7 +84,7 @@ public class DatabaseClient {
                         .setStatusMessage("OK")
                         .end(jsonResponse.toBuffer());
             } else {
-                logger.error("getData - failed to query database - {}", ar.cause());
+                logger.error("getData - failed to query database - {}", queryResult.cause());
                 response.setStatusCode(500)
                         .setStatusMessage("Internal Server Error")
                         .end();

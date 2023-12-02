@@ -39,7 +39,7 @@ public class SqliteUtil {
                 + "	temperature int NOT NULL,\n"
                 + "	humidity int NOT NULL,\n"
                 + "	time TEXT NOT NULL,\n"               // SQLite does not support DATETIME
-                + " PRIMARY KEY (sensorId, time)\n"
+                + " PRIMARY KEY (sensorId, time)\n"      // Will fail if entries log in sme minute, and seconds/microseconds omitted!!
                 + ");";
 
         try (Connection conn = DriverManager.getConnection(url);

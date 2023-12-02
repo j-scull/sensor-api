@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
 import projects.sensor.api.util.FileUtil;
+import projects.sensor.api.util.TimeUtil;
 import projects.sensor.db.DatabaseClient;
 import projects.sensor.model.DataResponse;
 import projects.sensor.model.GetSensorResponse;
@@ -111,39 +112,28 @@ public class OpenApiRouter {
 
                                 RequestParameters params = routingContext.get(ValidationHandler.REQUEST_CONTEXT_KEY);
                                 RequestParameter sensorId = params.pathParameter("sensorId");
-                                RequestParameter year = params.pathParameter("year");
-                                RequestParameter month = params.pathParameter("month");
-                                RequestParameter date = params.pathParameter("date");
-                                RequestParameter hour = params.pathParameter("hour");
-
-                                JsonArray queryParams = new JsonArray();
-                                queryParams.add(sensorId);
-                                queryParams.add(year);
-                                queryParams.add(month);
-                                queryParams.add(date);
-
-                                StringBuilder dateTimeString = new StringBuilder();
-                                dateTimeString.append(year);
-                                dateTimeString.append("-");
-                                dateTimeString.append(month);
-                                dateTimeString.append("-");
-                                dateTimeString.append(date);
-                                dateTimeString.append(" ");
-                                dateTimeString.append("-");
-
-                                // Todo - create date range
-                                // if selecting entries for 2023-11-28
-                                // SELECT WHERE date >= '2023-11-28 00:00:00' AND date < '2023-11-29 00:00:00'
-                                // if selecting entries for '2023-11-28 22:**:**'
-                                // SELECT WHERE date >= '2023-11-28 22:00:00' AND date < '2023-11-29 23:00:00'
-                                // should probably create a datetime and use a time delta if hours are involved
-
+                                RequestParameter year = params.queryParameter("year");
+                                RequestParameter month = params.queryParameter("month");
+                                RequestParameter date = params.queryParameter("date");
+                                RequestParameter hour = params.queryParameter("hour");
                                 if (hour != null) {
-                                    queryParams.add(hour);
                                     logger.info("getData - sensorId = {}, year = {}, month = {}, date = {}, hour = {}", sensorId, year, month, date, hour);
                                 } else {
                                     logger.info("getData - sensorId = {}, year = {}, month = {}, date = {}", sensorId, year, month, date);
                                 }
+
+                                // ToDo - validate the parameters
+
+                                // If selecting entries for 2023-11-28, a "from" and "until" range is created
+                                // from = '2023-11-28 00:00:00' and "until" '2023-11-29 00:00:00'
+                                String from = TimeUtil.getDateTimeString(year, month, date, hour);
+                                // Add one calendar date, or hour if not null
+                                String until = TimeUtil.getDateTimeStringNextInterval(year, month, date, hour);
+
+                                JsonArray queryParams = new JsonArray();
+                                queryParams.add(from);
+                                queryParams.add(until);
+
                                 this.databaseClient.getData(routingContext.response(), queryParams);
 
                             }).failureHandler(routingContext -> {
