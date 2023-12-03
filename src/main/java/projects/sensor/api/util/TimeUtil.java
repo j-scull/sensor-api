@@ -15,17 +15,17 @@ public class TimeUtil {
         dateTimeString.append("-");
         dateTimeString.append(date);
         if (hour != null) {
-            dateTimeString.append("-");
+            dateTimeString.append(" ");
             dateTimeString.append(hour);
             dateTimeString.append(":00:00");
         } else {
-            dateTimeString.append("-00:00:00");
+            dateTimeString.append(" 00:00:00");
         }
         return dateTimeString.toString();
     }
 
     public static String getDateTimeString(RequestParameter year, RequestParameter month, RequestParameter date) {
-        return getDateTimeString(year, month, date);
+        return getDateTimeString(year, month, date, null);
     }
 
     public static String getDateTimeStringNextInterval(RequestParameter year, RequestParameter month, RequestParameter date, RequestParameter hour) {
@@ -38,14 +38,14 @@ public class TimeUtil {
 
     public static String getDateTimeStringPlusDates(RequestParameter year, RequestParameter month, RequestParameter date, int n) {
         Calendar calendar = Calendar.getInstance();
-        calendar.set(Integer.valueOf(year.toString()), Integer.valueOf(month.toString()), Integer.valueOf(date.toString()));
+        calendar.set(Integer.valueOf(year.toString()), Integer.valueOf(month.toString()) -1 , Integer.valueOf(date.toString()), 0, 0, 0);
         calendar.add(Calendar.DATE, n);    // Todo - this is not incrementing as expected - "2023-12-2-00:00:00" -> "2024-01-03 18:44:02"
         return new SimpleDateFormat("y-MM-dd HH:mm:ss").format(calendar.getTime());
     }
 
     public static String getDateTimeStringPlusHours(RequestParameter year, RequestParameter month, RequestParameter date, RequestParameter hour, int n) {
         Calendar calendar = Calendar.getInstance();
-        calendar.set(Integer.valueOf(year.toString()), Integer.valueOf(month.toString()), Integer.valueOf(date.toString()), Integer.valueOf(hour.toString()), 0);
+        calendar.set(Integer.valueOf(year.toString()), Integer.valueOf(month.toString()) - 1, Integer.valueOf(date.toString()), Integer.valueOf(hour.toString()), 0, 0);
         calendar.add(Calendar.HOUR_OF_DAY, n);
         return new SimpleDateFormat("y-MM-dd HH:mm:ss").format(calendar.getTime());
     }

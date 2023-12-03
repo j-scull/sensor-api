@@ -5,7 +5,7 @@ URL="http://localhost:$PORT"
 SENSOR_ID=123
 YEAR=2023
 MONTH=12
-DATE=2
+DATE=02
 HOUR=18
 
 #curl -v -X GET "$URL/getData/$SENSOR_ID?year=$YEAR&month=$MONTH&date=$DATE&hour=$HOUR" -H 'accept: application/json' | jq
