@@ -234,7 +234,7 @@ public class OpenApiRouter {
                             .subscribe(r -> {
                                 Single.concat(
                                         FileUtil.replaceFile(vertx.fileSystem(), "swagger-initializer-override.js", SWAGGER_UI_DIR + "/swagger-initializer.js"),
-                                        FileUtil.copyFile(vertx.fileSystem(), SPEC_FILE, SWAGGER_UI_DIR + "/" + SPEC_FILE)
+                                        FileUtil.copyFile(vertx.fileSystem(), SPEC_FILE, SWAGGER_UI_DIR + "/" + SPEC_FILE, true)
                                 ).subscribe(res -> {
                                     router.route("/*").handler(StaticHandler.create(SWAGGER_UI_DIR));
                                     logger.info("Created swagger-ui endpoint successfully");
@@ -309,18 +309,30 @@ public class OpenApiRouter {
         return new JsonObject().put("data", sensor);
     }
 
+    // Todo - test this method with mock fileSystem
     private Single<File> loadWebJars(String source, String dest) {
-        return FileUtil.createDirectory(vertx.fileSystem(), dest)
-                .flatMap(fileSystem -> FileUtil.fileExists(vertx.fileSystem(), source))
-                .flatMap(exist -> {
-                    if(exist) {
-                        logger.info("Copying from {} to {}", source, dest);
-                        return FileUtil.copyFiles(vertx.fileSystem(), source, dest);
-                    } else {
-                        logger.error("Directory {} not found", source);
-                        return null;
-                    }
-                });
+            return FileUtil.fileExists(vertx.fileSystem(), dest)
+                    .flatMap(destExists -> {
+                        // If destination doesn't exist, we indicate that files are simply to be copied
+                        // Else it exists, so we indicate that the files should be replaced
+                        if (!destExists) {
+                            return FileUtil.createDirectory(vertx.fileSystem(), dest)
+                                    .map(file -> false);
+                        } else {
+                            logger.info("Destination directory {} already exists", dest);
+                            return Single.just(true);
+                        }
+                    })
+                    .flatMap(replaceExisting -> FileUtil.fileExists(vertx.fileSystem(), source)
+                            .flatMap(sourceExist -> {
+                                if (sourceExist) {
+                                    logger.info("Copying from {} to {}", source, dest);
+                                    return FileUtil.copyFiles(vertx.fileSystem(), source, dest, replaceExisting);
+                                } else {
+                                    logger.error("Source directory {} not found", source);
+                                    return null;
+                                }
+                            }));
     }
 
 
