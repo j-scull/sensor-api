@@ -84,7 +84,7 @@ public class OpenApiRouter {
                                 String temperature = jsonBody.getString("temperature");
                                 String humidity = jsonBody.getString("humidity");
                                 Timestamp timestamp = new java.sql.Timestamp(System.currentTimeMillis());
-                                String dateTimeString = new SimpleDateFormat("y-MM-dd HH:mm:ss").format(timestamp);
+                                String dateTimeString = new SimpleDateFormat("y-MM-dd HH:mm:ss.SSS").format(timestamp);
                                 logger.info("logData - sensorId = {}, temperature = {}, humidity = {}, time = {}", sensorId, temperature, humidity, dateTimeString);  // Todo - change log level to debug
 
                                 JsonArray queryParams = new JsonArray();
