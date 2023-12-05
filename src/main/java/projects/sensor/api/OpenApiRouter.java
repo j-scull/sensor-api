@@ -147,16 +147,37 @@ public class OpenApiRouter {
 
                     routerBuilder.operation("getDataRange")
                             .handler(routingContext -> {
+
+                                // Todo - validate these parameters
                                 RequestParameters params = routingContext.get(ValidationHandler.REQUEST_CONTEXT_KEY);
                                 RequestParameter sensorId = params.pathParameter("sensorId");
-                                RequestParameter start = params.queryParameter("start");
-                                RequestParameter stop = params.queryParameter("stop");
-                                logger.info("getDataRange - sensorId = {}, start = {}, stop = {}", sensorId, start, stop);
+                                RequestParameter fromYear = params.queryParameter("fromYear");
+                                RequestParameter fromMonth = params.queryParameter("fromMonth");
+                                RequestParameter fromDate = params.queryParameter("fromDate");
+                                RequestParameter fromHour = params.queryParameter("fromHour");
+                                RequestParameter untilYear = params.queryParameter("untilYear");
+                                RequestParameter untilMonth = params.queryParameter("untilMonth");
+                                RequestParameter untilDate = params.queryParameter("untilDate");
+                                RequestParameter untilHour = params.queryParameter("untilHour");
 
-                                routingContext.response()
-                                        .setStatusCode(200)
-                                        .setStatusMessage("OK")
-                                        .end(getDataMock().toBuffer());
+                                if (fromHour != null && untilHour != null) {
+                                    logger.info("getDataRange - sensorId = {}, fromYear = {}, fromMonth = {}, fromDate = {}, fromHour = {}, untilYear = {}, untilMonth = {}, untilDate = {}, untilHour = {}",
+                                            sensorId, fromYear, fromMonth, fromDate, fromHour, untilYear, untilMonth, untilDate, untilHour);
+                                } else {
+                                    logger.info("getDataRange - sensorId = {}, fromYear = {}, fromMonth = {}, fromDate = {}, untilYear = {}, untilMonth = {}, untilDate = {}",
+                                            sensorId, fromYear, fromMonth, fromDate, untilYear, untilMonth, untilDate);
+                                }
+
+                                String from = TimeUtil.getDateTimeString(fromYear, fromMonth, fromDate, fromHour);
+                                // The range is inclusive of the specified untilDate/untilHour
+                                String until = TimeUtil.getDateTimeStringNextInterval(untilYear, untilMonth, untilDate, untilHour);
+
+                                JsonArray queryParams = new JsonArray();
+                                queryParams.add(from);
+                                queryParams.add(until);
+
+                                this.databaseClient.getData(routingContext.response(), queryParams);
+
                             }).failureHandler(routingContext -> {
                                 JsonObject operation = routingContext.get("operationModel");
                                 routingContext.response()

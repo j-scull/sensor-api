@@ -100,16 +100,52 @@ paths:
           required: true
           schema:
             type: string
-        - name: start
+        - name: fromYear
           in: query
+          description: Get data from this year.
           required: true
-          description: Get data from this time.
           schema:
             type: string
-        - name: stop
+        - name: fromMonth
           in: query
+          description: Get data from this month.
           required: true
-          description: Get data up until this time .
+          schema:
+            type: string
+        - name: fromDate
+          in: query
+          description: Get data from this date of month.
+          required: true
+          schema:
+            type: string
+        - name: fromHour
+          in: query
+          description: Get data from this hour, 24 hour format.
+          required: false
+          schema:
+            type: string
+        - name: untilYear
+          in: query
+          description: Get data until this year.
+          required: true
+          schema:
+            type: string
+        - name: untilMonth
+          in: query
+          description: Get data until this month.
+          required: true
+          schema:
+            type: string
+        - name: untilDate
+          in: query
+          description: Get data until this date of month.
+          required: true
+          schema:
+            type: string
+        - name: untilHour
+          in: query
+          description: Get data until this hour, 24 hour format.
+          required: false
           schema:
             type: string
       responses:
