@@ -119,7 +119,7 @@ public class DatabaseClient {
 
         logger.info("listSensors - no queryParams");
 
-        String query = "SELECT sensorID FROM sensor_info";
+        String query = "SELECT * FROM sensor_info";
 
         this.sqlClient.query(query, queryResult -> {
             if (queryResult.succeeded()) {
@@ -141,7 +141,7 @@ public class DatabaseClient {
     }
 
     public void getSensor(JsonArray queryParams, HttpServerResponse response) {
-        logger.info("listSensors - queryParams = {}", queryParams);
+        logger.info("getSensor - queryParams = {}", queryParams);
 
         String query = "SELECT * FROM sensor_info WHERE sensorId = ?";
 
@@ -149,20 +149,18 @@ public class DatabaseClient {
             if (queryResult.succeeded()) {
                 ResultSet result = queryResult.result();
                 for (JsonObject row: result.getRows()) {
-                    logger.info("listSensors- result = {}", row);
+                    logger.info("getSensor - result = {}", row);
                 }
                 JsonObject jsonResponse = new JsonObject().put("data", result.getRows());
                 response.setStatusCode(200)
                         .setStatusMessage("OK")
                         .end(jsonResponse.toBuffer());
             } else {
-                logger.error("listSensors - failed to query database - {}", queryResult.cause().getMessage());
+                logger.error("getSensor - failed to query database - {}", queryResult.cause().getMessage());
                 response.setStatusCode(500)
                         .setStatusMessage("Internal Server Error")
                         .end();
             }
         });
     }
-
-
 }

@@ -237,13 +237,15 @@ public class OpenApiRouter {
 
                     routerBuilder.operation("getSensor")
                             .handler(routingContext -> {
+
                                 RequestParameters  params = routingContext.get(ValidationHandler.REQUEST_CONTEXT_KEY);
                                 RequestParameter sensorId = params.pathParameter("sensorId");
-                                logger.info("getSensor - params = {}", params);
-                                routingContext.response()
-                                        .setStatusCode(200)
-                                        .setStatusMessage("OK")
-                                        .end(getSensorMock(sensorId.getString()).toBuffer());
+                                logger.info("getSensor - sensorId = {}", sensorId);
+
+                                JsonArray queryParams = new JsonArray();
+                                queryParams.add(sensorId);
+                                databaseClient.getSensor(queryParams, routingContext.response());
+
                             }).failureHandler(routingContext -> {
                                 JsonObject operation = routingContext.get("operationModel");
                                 routingContext.response()
