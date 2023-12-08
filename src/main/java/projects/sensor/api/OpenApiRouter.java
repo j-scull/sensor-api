@@ -220,12 +220,12 @@ public class OpenApiRouter {
 
                     routerBuilder.operation("listSensors")
                             .handler(routingContext -> {
+
                                 RequestParameters  params = routingContext.get(ValidationHandler.REQUEST_CONTEXT_KEY);
-                                logger.info("listSensors - params = {}", params);
-                                routingContext.response()
-                                        .setStatusCode(200)
-                                        .setStatusMessage("OK")
-                                        .end(listSensorsMock().toBuffer());
+                                logger.info("listSensors - no params");
+
+                                databaseClient.listSensors(routingContext.response());
+
                             }).failureHandler(routingContext -> {
                                 JsonObject operation = routingContext.get("operationModel");
                                 routingContext.response()
