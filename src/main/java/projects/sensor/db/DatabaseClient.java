@@ -53,7 +53,7 @@ public class DatabaseClient {
                     if (queryResult.succeeded()) {
                         logger.info("logData - logged data successfully");
                     } else {
-                        logger.error("logData - query to database failed - {}", queryResult.cause());
+                        logger.error("logData - query to database failed - {}", queryResult.cause().getMessage());
                     }
                 });
 
@@ -67,7 +67,7 @@ public class DatabaseClient {
     // Todo
     // SELECT using params and using a prepared statement
     // Think about returned time format - "time":[2023,11,25,22,34,10,41000000], what should be used here?
-    public void getData(HttpServerResponse response, JsonArray queryParams) throws RuntimeException {
+    public void getData(JsonArray queryParams, HttpServerResponse response) throws RuntimeException {
 
         logger.info("getData - queryParams = {}", queryParams);
 
@@ -84,7 +84,7 @@ public class DatabaseClient {
                         .setStatusMessage("OK")
                         .end(jsonResponse.toBuffer());
             } else {
-                logger.error("getData - failed to query database - {}", queryResult.cause());
+                logger.error("getData - failed to query database - {}", queryResult.cause().getMessage());
                 response.setStatusCode(500)
                         .setStatusMessage("Internal Server Error")
                         .end();
@@ -92,8 +92,26 @@ public class DatabaseClient {
         });
     }
 
-    // What is the return value? List<Data> or List<DataResponse>
-    public void getDataRange() {
+    public void addSensor(JsonArray queryParams, HttpServerResponse response) {
+
+        logger.info("addSensor - queryParams = {}", queryParams);
+
+        String query = "INSERT INTO sensor_info(sensorId, location, creationTime) VALUES (?, ?, ?)";
+
+        this.sqlClient.queryWithParams(query, queryParams, queryResult -> {
+            if (queryResult.succeeded()) {
+                logger.info("addSensor - added sensor successfully");
+                response.setStatusCode(201)
+                        .setStatusMessage("OK")
+                        .end();
+            } else {
+                logger.error("addSensor - failed to add sensorId - {}", queryResult.cause().getMessage());
+                response.setStatusCode(500)
+                        .setStatusMessage("Internal Server Error")
+                        .end();
+            }
+        });
+
 
     }
 
@@ -107,7 +125,5 @@ public class DatabaseClient {
 
     }
 
-    public void addSensor() {
 
-    }
 }

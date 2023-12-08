@@ -87,6 +87,8 @@ public class OpenApiRouter {
                                 String dateTimeString = new SimpleDateFormat("y-MM-dd HH:mm:ss.SSS").format(timestamp);
                                 logger.info("logData - sensorId = {}, temperature = {}, humidity = {}, time = {}", sensorId, temperature, humidity, dateTimeString);  // Todo - change log level to debug
 
+                                // Todo - validate data. Ensure sensorId is in the database
+
                                 JsonArray queryParams = new JsonArray();
                                 queryParams.add(sensorId);
                                 queryParams.add(temperature);
@@ -134,7 +136,7 @@ public class OpenApiRouter {
                                 queryParams.add(from);
                                 queryParams.add(until);
 
-                                this.databaseClient.getData(routingContext.response(), queryParams);
+                                this.databaseClient.getData(queryParams, routingContext.response());
 
                             }).failureHandler(routingContext -> {
                                 JsonObject operation = routingContext.get("operationModel");
@@ -176,7 +178,36 @@ public class OpenApiRouter {
                                 queryParams.add(from);
                                 queryParams.add(until);
 
-                                this.databaseClient.getData(routingContext.response(), queryParams);
+                                this.databaseClient.getData(queryParams, routingContext.response());
+
+                            }).failureHandler(routingContext -> {
+                                JsonObject operation = routingContext.get("operationModel");
+                                routingContext.response()
+                                        .setStatusCode(400)
+                                        .setStatusMessage("Bad Request")
+                                        .end();
+                                logger.error("{} error - {}", operation.getString("operationId"), routingContext.failure());
+                            });
+
+                    routerBuilder.operation("addSensor")
+                            .handler(routingContext -> {
+
+                                RequestParameters  params = routingContext.get(ValidationHandler.REQUEST_CONTEXT_KEY);
+                                RequestParameter body = params.body();
+                                JsonObject jsonBody = body.getJsonObject();
+                                String sensorId = jsonBody.getString("sensorId");
+                                String location = jsonBody.getString("location");
+                                Timestamp timestamp = new java.sql.Timestamp(System.currentTimeMillis());
+                                String dateTimeString = new SimpleDateFormat("y-MM-dd HH:mm:ss.SSS").format(timestamp);
+
+                                JsonArray queryParams = new JsonArray();
+                                queryParams.add(sensorId);
+                                queryParams.add(location);
+                                queryParams.add(dateTimeString);
+
+                                logger.info("addSensor - sensorId = {}, location = {}, creationTime = {}", sensorId, location, dateTimeString);
+
+                                databaseClient.addSensor(queryParams, routingContext.response());
 
                             }).failureHandler(routingContext -> {
                                 JsonObject operation = routingContext.get("operationModel");
@@ -213,25 +244,6 @@ public class OpenApiRouter {
                                         .setStatusCode(200)
                                         .setStatusMessage("OK")
                                         .end(getSensorMock(sensorId.getString()).toBuffer());
-                            }).failureHandler(routingContext -> {
-                                JsonObject operation = routingContext.get("operationModel");
-                                routingContext.response()
-                                        .setStatusCode(400)
-                                        .setStatusMessage("Bad Request")
-                                        .end();
-                                logger.error("{} error - {}", operation.getString("operationId"), routingContext.failure());
-                            });
-
-                    routerBuilder.operation("addSensor")
-                            .handler(routingContext -> {
-                                RequestParameters  params = routingContext.get(ValidationHandler.REQUEST_CONTEXT_KEY);
-                                RequestParameter body = params.body();
-                                JsonObject jsonBody = body.getJsonObject();
-                                logger.info("addSensor - sensorId = {}, location = {}", jsonBody.getString("sensorId"), jsonBody.getString("location"));
-                                routingContext.response()
-                                        .setStatusCode(201)
-                                        .setStatusMessage("OK")
-                                        .end();
                             }).failureHandler(routingContext -> {
                                 JsonObject operation = routingContext.get("operationModel");
                                 routingContext.response()
