@@ -41,7 +41,7 @@ public class OpenApiRouter {
 
     private DatabaseClient databaseClient;
 
-    private final Logger logger = LoggerFactory.getLogger(App.class);
+    private final Logger LOGGER = LoggerFactory.getLogger(App.class);
 
     public OpenApiRouter() {
         vertx = Vertx.vertx();
@@ -60,7 +60,7 @@ public class OpenApiRouter {
     }
 
     public void loadSpec() {
-        logger.info("OpenApiRouter - Loading spec {}", SPEC_FILE);
+        LOGGER.info("OpenApiRouter - Loading spec {}", SPEC_FILE);
         RouterBuilder.create(vertx.getDelegate(), SPEC_FILE)
                 .onSuccess(routerBuilder -> {
 
@@ -85,7 +85,7 @@ public class OpenApiRouter {
                                 String humidity = jsonBody.getString("humidity");
                                 Timestamp timestamp = new java.sql.Timestamp(System.currentTimeMillis());
                                 String dateTimeString = new SimpleDateFormat("y-MM-dd HH:mm:ss.SSS").format(timestamp);
-                                logger.info("logData - sensorId = {}, temperature = {}, humidity = {}, time = {}", sensorId, temperature, humidity, dateTimeString);  // Todo - change log level to debug
+                                LOGGER.info("logData - sensorId = {}, temperature = {}, humidity = {}, time = {}", sensorId, temperature, humidity, dateTimeString);  // Todo - change log level to debug
 
                                 // Todo - validate data. Ensure sensorId is in the database
 
@@ -94,19 +94,24 @@ public class OpenApiRouter {
                                 queryParams.add(temperature);
                                 queryParams.add(humidity);
                                 queryParams.add(dateTimeString);
-                                this.databaseClient.logData(queryParams);
+                                this.databaseClient.logData(queryParams).subscribe(result ->
+                                                routingContext.response()
+                                                    .setStatusCode(201)
+                                                    .setStatusMessage("OK")
+                                                    .end(),
+                                                e -> routingContext.response()
+                                                    .setStatusCode(500)
+                                                    .setStatusMessage("Internal Server Error")
+                                                    .end());
 
-                                routingContext.response()
-                                        .setStatusCode(201)
-                                        .setStatusMessage("OK")
-                                        .end();
+
                             }).failureHandler(routingContext -> {
                                 JsonObject operation = routingContext.get("operationModel");
                                 routingContext.response()
                                         .setStatusCode(400)
                                         .setStatusMessage("Bad Request")
                                         .end();
-                                logger.error("{} error - {}", operation.getString("operationId"), routingContext.failure());
+                                LOGGER.error("{} error - {}", operation.getString("operationId"), routingContext.failure());
                             });
 
                     routerBuilder.operation("getData")
@@ -119,9 +124,9 @@ public class OpenApiRouter {
                                 RequestParameter date = params.queryParameter("date");
                                 RequestParameter hour = params.queryParameter("hour");
                                 if (hour != null) {
-                                    logger.info("getData - sensorId = {}, year = {}, month = {}, date = {}, hour = {}", sensorId, year, month, date, hour);
+                                    LOGGER.info("getData - sensorId = {}, year = {}, month = {}, date = {}, hour = {}", sensorId, year, month, date, hour);
                                 } else {
-                                    logger.info("getData - sensorId = {}, year = {}, month = {}, date = {}", sensorId, year, month, date);
+                                    LOGGER.info("getData - sensorId = {}, year = {}, month = {}, date = {}", sensorId, year, month, date);
                                 }
 
                                 // ToDo - validate the parameters
@@ -136,7 +141,17 @@ public class OpenApiRouter {
                                 queryParams.add(from);
                                 queryParams.add(until);
 
-                                this.databaseClient.getData(queryParams, routingContext.response());
+                                this.databaseClient.getData(queryParams).subscribe(resultSet -> {
+                                    JsonObject jsonResponse = new JsonObject().put("data", resultSet.getRows());
+                                    LOGGER.info("getData - result = {}", jsonResponse);
+                                    routingContext.response()
+                                            .setStatusCode(200)
+                                            .setStatusMessage("OK")
+                                            .end(jsonResponse.toBuffer());
+                                    }, e -> routingContext.response()
+                                            .setStatusCode(500)
+                                            .setStatusMessage("Internal Server Error")
+                                            .end());
 
                             }).failureHandler(routingContext -> {
                                 JsonObject operation = routingContext.get("operationModel");
@@ -144,7 +159,7 @@ public class OpenApiRouter {
                                         .setStatusCode(400)
                                         .setStatusMessage("Bad Request")
                                         .end();
-                                logger.error("{} error - {}", operation.getString("operationId"), routingContext.failure());
+                                LOGGER.error("{} error - {}", operation.getString("operationId"), routingContext.failure());
                             });
 
                     routerBuilder.operation("getDataRange")
@@ -163,10 +178,10 @@ public class OpenApiRouter {
                                 RequestParameter untilHour = params.queryParameter("untilHour");
 
                                 if (fromHour != null && untilHour != null) {
-                                    logger.info("getDataRange - sensorId = {}, fromYear = {}, fromMonth = {}, fromDate = {}, fromHour = {}, untilYear = {}, untilMonth = {}, untilDate = {}, untilHour = {}",
+                                    LOGGER.info("getDataRange - sensorId = {}, fromYear = {}, fromMonth = {}, fromDate = {}, fromHour = {}, untilYear = {}, untilMonth = {}, untilDate = {}, untilHour = {}",
                                             sensorId, fromYear, fromMonth, fromDate, fromHour, untilYear, untilMonth, untilDate, untilHour);
                                 } else {
-                                    logger.info("getDataRange - sensorId = {}, fromYear = {}, fromMonth = {}, fromDate = {}, untilYear = {}, untilMonth = {}, untilDate = {}",
+                                    LOGGER.info("getDataRange - sensorId = {}, fromYear = {}, fromMonth = {}, fromDate = {}, untilYear = {}, untilMonth = {}, untilDate = {}",
                                             sensorId, fromYear, fromMonth, fromDate, untilYear, untilMonth, untilDate);
                                 }
 
@@ -178,7 +193,15 @@ public class OpenApiRouter {
                                 queryParams.add(from);
                                 queryParams.add(until);
 
-                                this.databaseClient.getData(queryParams, routingContext.response());
+                                this.databaseClient.getData(queryParams).subscribe(resultSet -> {
+                                    JsonObject jsonResponse = new JsonObject().put("data", resultSet.getRows());
+                                    LOGGER.info("getDataRange - result = {}", jsonResponse);
+                                    routingContext.response().setStatusCode(200)
+                                            .setStatusMessage("OK")
+                                            .end(jsonResponse.toBuffer());
+                                    }, e -> routingContext.response().setStatusCode(500)
+                                            .setStatusMessage("Internal Server Error")
+                                            .end());
 
                             }).failureHandler(routingContext -> {
                                 JsonObject operation = routingContext.get("operationModel");
@@ -186,7 +209,7 @@ public class OpenApiRouter {
                                         .setStatusCode(400)
                                         .setStatusMessage("Bad Request")
                                         .end();
-                                logger.error("{} error - {}", operation.getString("operationId"), routingContext.failure());
+                                LOGGER.error("{} error - {}", operation.getString("operationId"), routingContext.failure());
                             });
 
                     routerBuilder.operation("addSensor")
@@ -205,9 +228,18 @@ public class OpenApiRouter {
                                 queryParams.add(location);
                                 queryParams.add(dateTimeString);
 
-                                logger.info("addSensor - sensorId = {}, location = {}, creationTime = {}", sensorId, location, dateTimeString);
+                                LOGGER.info("addSensor - sensorId = {}, location = {}, creationTime = {}", sensorId, location, dateTimeString);
 
-                                databaseClient.addSensor(queryParams, routingContext.response());
+                                databaseClient.addSensor(queryParams).subscribe(result -> {
+                                    routingContext.response()
+                                            .setStatusCode(201)
+                                            .setStatusMessage("OK")
+                                            .end();
+                                    LOGGER.info("addSensor complete");
+                                    }, e ->  routingContext.response()
+                                                .setStatusCode(500)
+                                                .setStatusMessage("Internal Server Error")
+                                                .end());
 
                             }).failureHandler(routingContext -> {
                                 JsonObject operation = routingContext.get("operationModel");
@@ -215,16 +247,24 @@ public class OpenApiRouter {
                                         .setStatusCode(400)
                                         .setStatusMessage("Bad Request")
                                         .end();
-                                logger.error("{} error - {}", operation.getString("operationId"), routingContext.failure());
+                                LOGGER.error("{} error - {}", operation.getString("operationId"), routingContext.failure());
                             });
 
                     routerBuilder.operation("listSensors")
                             .handler(routingContext -> {
 
-                                RequestParameters  params = routingContext.get(ValidationHandler.REQUEST_CONTEXT_KEY);
-                                logger.info("listSensors - no params");
+                                LOGGER.info("listSensors - no params");
 
-                                databaseClient.listSensors(routingContext.response());
+                                databaseClient.listSensors().subscribe(resultSet -> {
+                                    JsonObject jsonResponse = new JsonObject().put("data", resultSet.getRows());
+                                    routingContext.response()
+                                            .setStatusCode(200)
+                                            .setStatusMessage("OK")
+                                            .end(jsonResponse.toBuffer());
+                                    }, e -> routingContext.response()
+                                            .setStatusCode(500)
+                                            .setStatusMessage("Internal Server Error")
+                                            .end());
 
                             }).failureHandler(routingContext -> {
                                 JsonObject operation = routingContext.get("operationModel");
@@ -232,7 +272,7 @@ public class OpenApiRouter {
                                         .setStatusCode(400)
                                         .setStatusMessage("Bad Request")
                                         .end();
-                                logger.error("{} error - {}", operation.getString("operationId"), routingContext.failure());
+                                LOGGER.error("{} error - {}", operation.getString("operationId"), routingContext.failure());
                             });
 
                     routerBuilder.operation("getSensor")
@@ -240,11 +280,20 @@ public class OpenApiRouter {
 
                                 RequestParameters  params = routingContext.get(ValidationHandler.REQUEST_CONTEXT_KEY);
                                 RequestParameter sensorId = params.pathParameter("sensorId");
-                                logger.info("getSensor - sensorId = {}", sensorId);
+                                LOGGER.info("getSensor - sensorId = {}", sensorId);
 
                                 JsonArray queryParams = new JsonArray();
                                 queryParams.add(sensorId);
-                                databaseClient.getSensor(queryParams, routingContext.response());
+                                databaseClient.getSensor(queryParams).subscribe(resultSet -> {
+                                    JsonObject jsonResponse = new JsonObject().put("data", resultSet.getRows());
+                                    routingContext.response()
+                                            .setStatusCode(200)
+                                            .setStatusMessage("OK")
+                                            .end(jsonResponse.toBuffer());
+                                    }, e -> routingContext.response()
+                                            .setStatusCode(500)
+                                            .setStatusMessage("Internal Server Error")
+                                            .end());
 
                             }).failureHandler(routingContext -> {
                                 JsonObject operation = routingContext.get("operationModel");
@@ -252,7 +301,7 @@ public class OpenApiRouter {
                                         .setStatusCode(400)
                                         .setStatusMessage("Bad Request")
                                         .end();
-                                logger.error("{} error - {}", operation.getString("operationId"), routingContext.failure());
+                                LOGGER.error("{} error - {}", operation.getString("operationId"), routingContext.failure());
                             });
 
                     // Generate the router
@@ -265,15 +314,15 @@ public class OpenApiRouter {
                      * Creates the swagger-ui endpoint
                      */
                     loadWebJars("META-INF/resources/webjars/swagger-ui/5.9.0", SWAGGER_UI_DIR)
-                            .doOnError(e -> logger.error("Failed to create swagger-ui endpoint, exception = {}", e))
+                            .doOnError(e -> LOGGER.error("Failed to create swagger-ui endpoint, exception = {}", e))
                             .subscribe(r -> {
                                 Single.concat(
                                         FileUtil.replaceFile(vertx.fileSystem(), "swagger-initializer-override.js", SWAGGER_UI_DIR + "/swagger-initializer.js"),
                                         FileUtil.copyFile(vertx.fileSystem(), SPEC_FILE, SWAGGER_UI_DIR + "/" + SPEC_FILE, true)
                                 ).subscribe(res -> {
                                     router.route("/*").handler(StaticHandler.create(SWAGGER_UI_DIR));
-                                    logger.info("Created swagger-ui endpoint successfully");
-                                }, e -> logger.error("Failed to create swagger-ui endpoint, exception = {}", e));
+                                    LOGGER.info("Created swagger-ui endpoint successfully");
+                                }, e -> LOGGER.error("Failed to create swagger-ui endpoint, exception = {}", e));
                             });
 
                     router.errorHandler(404, routingContext -> {
@@ -293,14 +342,14 @@ public class OpenApiRouter {
                             .setPort(PORT)
                             .setHost("localhost"));
                     server.requestHandler(router).listen().onSuccess(r ->
-                            logger.info("OpenApiRouter - Started listening on port {}", PORT));
+                            LOGGER.info("OpenApiRouter - Started listening on port {}", PORT));
 
-                    logger.info("OpenApiRouter - Spec loaded successfully");
+                    LOGGER.info("OpenApiRouter - Spec loaded successfully");
 
                 })
                 .onFailure(err -> {
                     // Something went wrong during router builder initialization
-                    logger.error("OpenApiRouter - Failed to load spec!");
+                    LOGGER.error("OpenApiRouter - Failed to load spec!");
                 });
 
     }
@@ -354,17 +403,17 @@ public class OpenApiRouter {
                             return FileUtil.createDirectory(vertx.fileSystem(), dest)
                                     .map(file -> false);
                         } else {
-                            logger.info("Destination directory {} already exists", dest);
+                            LOGGER.info("Destination directory {} already exists", dest);
                             return Single.just(true);
                         }
                     })
                     .flatMap(replaceExisting -> FileUtil.fileExists(vertx.fileSystem(), source)
                             .flatMap(sourceExist -> {
                                 if (sourceExist) {
-                                    logger.info("Copying from {} to {}", source, dest);
+                                    LOGGER.info("Copying from {} to {}", source, dest);
                                     return FileUtil.copyFiles(vertx.fileSystem(), source, dest, replaceExisting);
                                 } else {
-                                    logger.error("Source directory {} not found", source);
+                                    LOGGER.error("Source directory {} not found", source);
                                     return null;
                                 }
                             }));
