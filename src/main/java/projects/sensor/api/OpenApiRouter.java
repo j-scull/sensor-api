@@ -23,7 +23,7 @@ import org.slf4j.Logger;
 import projects.sensor.api.util.FileUtil;
 import projects.sensor.api.util.TimeUtil;
 import projects.sensor.db.DatabaseClient;
-import projects.sensor.model.DataResponse;
+import projects.sensor.model.GetDataResponse;
 import projects.sensor.model.GetSensorResponse;
 
 import java.io.File;
@@ -114,28 +114,22 @@ public class OpenApiRouter {
                                 LOGGER.error("{} error - {}", operation.getString("operationId"), routingContext.failure());
                             });
 
-                    routerBuilder.operation("getData")
+                    routerBuilder.operation("getDataForDate")
                             .handler(routingContext -> {
 
                                 RequestParameters params = routingContext.get(ValidationHandler.REQUEST_CONTEXT_KEY);
                                 RequestParameter sensorId = params.pathParameter("sensorId");
-                                RequestParameter year = params.queryParameter("year");
-                                RequestParameter month = params.queryParameter("month");
-                                RequestParameter date = params.queryParameter("date");
-                                RequestParameter hour = params.queryParameter("hour");
-                                if (hour != null) {
-                                    LOGGER.info("getData - sensorId = {}, year = {}, month = {}, date = {}, hour = {}", sensorId, year, month, date, hour);
-                                } else {
-                                    LOGGER.info("getData - sensorId = {}, year = {}, month = {}, date = {}", sensorId, year, month, date);
-                                }
+                                RequestParameter body = params.body();
+                                JsonObject jsonRequest = body.getJsonObject();
+                                LOGGER.info("getDataForDate - sensorId = {}, jsonRequest = {}", sensorId, jsonRequest.encodePrettily());
 
-                                // ToDo - validate the parameters
+                                // ToDo - validate the parameters - read into generated model class
 
                                 // If selecting entries for 2023-11-28, a "from" and "until" range is created
                                 // from = '2023-11-28 00:00:00' and "until" '2023-11-29 00:00:00'
-                                String from = TimeUtil.getDateTimeString(year, month, date, hour);
+                                String from = TimeUtil.getDateTimeString(jsonRequest);
                                 // Add one calendar date, or hour if not null
-                                String until = TimeUtil.getDateTimeStringNextInterval(year, month, date, hour);
+                                String until = TimeUtil.getDateTimeStringNextInterval(jsonRequest);
 
                                 JsonArray queryParams = new JsonArray();
                                 queryParams.add(from);
@@ -143,7 +137,7 @@ public class OpenApiRouter {
 
                                 this.databaseClient.getData(queryParams).subscribe(resultSet -> {
                                     JsonObject jsonResponse = new JsonObject().put("data", resultSet.getRows());
-                                    LOGGER.info("getData - result = {}", jsonResponse);
+                                    LOGGER.info("getData - result = {}", jsonResponse.encodePrettily());
                                     routingContext.response()
                                             .setStatusCode(200)
                                             .setStatusMessage("OK")
@@ -162,32 +156,19 @@ public class OpenApiRouter {
                                 LOGGER.error("{} error - {}", operation.getString("operationId"), routingContext.failure());
                             });
 
-                    routerBuilder.operation("getDataRange")
+                    routerBuilder.operation("getDataForDateRange")
                             .handler(routingContext -> {
 
                                 // Todo - validate these parameters
                                 RequestParameters params = routingContext.get(ValidationHandler.REQUEST_CONTEXT_KEY);
                                 RequestParameter sensorId = params.pathParameter("sensorId");
-                                RequestParameter fromYear = params.queryParameter("fromYear");
-                                RequestParameter fromMonth = params.queryParameter("fromMonth");
-                                RequestParameter fromDate = params.queryParameter("fromDate");
-                                RequestParameter fromHour = params.queryParameter("fromHour");
-                                RequestParameter untilYear = params.queryParameter("untilYear");
-                                RequestParameter untilMonth = params.queryParameter("untilMonth");
-                                RequestParameter untilDate = params.queryParameter("untilDate");
-                                RequestParameter untilHour = params.queryParameter("untilHour");
+                                RequestParameter body = params.body();
+                                JsonObject jsonRequest = body.getJsonObject();
+                                LOGGER.info("getDataForDateRange - sensorId = {}, jsonRequest = {}", sensorId, jsonRequest.encodePrettily());
 
-                                if (fromHour != null && untilHour != null) {
-                                    LOGGER.info("getDataRange - sensorId = {}, fromYear = {}, fromMonth = {}, fromDate = {}, fromHour = {}, untilYear = {}, untilMonth = {}, untilDate = {}, untilHour = {}",
-                                            sensorId, fromYear, fromMonth, fromDate, fromHour, untilYear, untilMonth, untilDate, untilHour);
-                                } else {
-                                    LOGGER.info("getDataRange - sensorId = {}, fromYear = {}, fromMonth = {}, fromDate = {}, untilYear = {}, untilMonth = {}, untilDate = {}",
-                                            sensorId, fromYear, fromMonth, fromDate, untilYear, untilMonth, untilDate);
-                                }
-
-                                String from = TimeUtil.getDateTimeString(fromYear, fromMonth, fromDate, fromHour);
+                                String from = TimeUtil.getDateTimeString(jsonRequest.getJsonObject("from"));
                                 // The range is inclusive of the specified untilDate/untilHour
-                                String until = TimeUtil.getDateTimeStringNextInterval(untilYear, untilMonth, untilDate, untilHour);
+                                String until = TimeUtil.getDateTimeStringNextInterval(jsonRequest.getJsonObject("until"));
 
                                 JsonArray queryParams = new JsonArray();
                                 queryParams.add(from);
@@ -195,8 +176,9 @@ public class OpenApiRouter {
 
                                 this.databaseClient.getData(queryParams).subscribe(resultSet -> {
                                     JsonObject jsonResponse = new JsonObject().put("data", resultSet.getRows());
-                                    LOGGER.info("getDataRange - result = {}", jsonResponse);
-                                    routingContext.response().setStatusCode(200)
+                                    LOGGER.info("getDataForDateRange - result = {}", jsonResponse.encodePrettily());
+                                    routingContext.response()
+                                            .setStatusCode(200)
                                             .setStatusMessage("OK")
                                             .end(jsonResponse.toBuffer());
                                     }, e -> routingContext.response().setStatusCode(500)
@@ -212,7 +194,7 @@ public class OpenApiRouter {
                                 LOGGER.error("{} error - {}", operation.getString("operationId"), routingContext.failure());
                             });
 
-                    routerBuilder.operation("addSensor")
+                    routerBuilder.operation("createSensor")
                             .handler(routingContext -> {
 
                                 RequestParameters  params = routingContext.get(ValidationHandler.REQUEST_CONTEXT_KEY);
@@ -228,14 +210,14 @@ public class OpenApiRouter {
                                 queryParams.add(location);
                                 queryParams.add(dateTimeString);
 
-                                LOGGER.info("addSensor - sensorId = {}, location = {}, creationTime = {}", sensorId, location, dateTimeString);
+                                LOGGER.info("createSensor - sensorId = {}, location = {}, creationTime = {}", sensorId, location, dateTimeString);
 
-                                databaseClient.addSensor(queryParams).subscribe(result -> {
+                                databaseClient.createSensor(queryParams).subscribe(result -> {
                                     routingContext.response()
                                             .setStatusCode(201)
                                             .setStatusMessage("OK")
                                             .end();
-                                    LOGGER.info("addSensor complete");
+                                    LOGGER.info("createSensor complete");
                                     }, e ->  routingContext.response()
                                                 .setStatusCode(500)
                                                 .setStatusMessage("Internal Server Error")
@@ -257,6 +239,7 @@ public class OpenApiRouter {
 
                                 databaseClient.listSensors().subscribe(resultSet -> {
                                     JsonObject jsonResponse = new JsonObject().put("data", resultSet.getRows());
+                                    LOGGER.info("listSensors - result = {}", jsonResponse.encodePrettily());
                                     routingContext.response()
                                             .setStatusCode(200)
                                             .setStatusMessage("OK")
@@ -369,11 +352,11 @@ public class OpenApiRouter {
     // Mock a response
     private JsonObject getDataMock() {
         int n = 4;
-        DataResponse[] dataPoints = new DataResponse[n];//
+        GetDataResponse[] dataPoints = new GetDataResponse[n];//
         for (int i = 0; i < n; i++) {
             int temperature = (int) (Math.random() * 30);
             int humidity = (int) (Math.random() * 100);
-            dataPoints[i] = new DataResponse(temperature, humidity, String.valueOf(i));
+            dataPoints[i] = new GetDataResponse(temperature, humidity, String.valueOf(i));
         }
         return new JsonObject().put("data", dataPoints);
     }

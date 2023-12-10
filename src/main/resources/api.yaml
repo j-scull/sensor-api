@@ -7,7 +7,7 @@ info:
 servers:
   - url: http://sensor-api/v1
 paths:
-  /logData:    # Todo - update to use apiKey
+  /data:    # Todo - update to use apiKey
     post:
       summary: Log temperature and humidity data.
       operationId: logData
@@ -21,7 +21,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DataRequest'
+              $ref: '#/components/schemas/UpdateRequest'
       responses:
         201:
           description: Null response.
@@ -32,14 +32,43 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
-  /getData/{sensorId}:
-    get:
+#  /data/{sensorId}:
+#    get:
+#      summary: Get all logged data for a specified sensorId over the last 24 hour period.
+#      operationId: getData
+#      #      security:
+#      #        - api_key: []
+#      tags:
+#        - getData
+#      parameters:
+#        - name: sensorId
+#          in: path
+#          description: Get data logged by this sensor.
+#          required: true
+#          schema:
+#            type: string
+#      responses:
+#        200:
+#          description: An array of data logged by a sensor.
+#          content:
+#            application/json:
+#              schema:
+#                $ref: "#/components/schemas/GetDataResponseArray"
+#        default:
+#          description: Unexpected error.
+#          content:
+#            application/json:
+#              schema:
+#                $ref: "#/components/schemas/Error"
+
+  /data/{sensorId}/date:
+    post:
       summary: Get all logged data for a specified sensorId and date.
-      operationId: getData
+      operationId: getDataForDate
 #      security:
 #        - api_key: []
       tags:
-        - getData
+        - getDataForDate
       parameters:
         - name: sensorId
           in: path
@@ -47,37 +76,20 @@ paths:
           required: true
           schema:
             type: string
-        - name: year
-          in: query
-          description: Get data for this year.
-          required: true
-          schema:
-            type: string
-        - name: month
-          in: query
-          description: Get data for this month.
-          required: true
-          schema:
-            type: string
-        - name: date
-          in: query
-          description: Get data for this date of month.
-          required: true
-          schema:
-            type: string
-        - name: hour
-          in: query
-          description: Get data for this hour, 24 hour format.
-          required: false
-          schema:
-            type: string
+      requestBody:
+        description: Request body specifying a date/time
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryDateTime'
       responses:
         200:
-          description: An array of dataPoints.
+          description: An array of data logged by a sensor.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/DataResponseArray"
+                $ref: "#/components/schemas/GetDataResponseArray"
         default:
           description: Unexpected error.
           content:
@@ -85,14 +97,14 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
     
-  /getData/{sensorId}/range:
-    get:
+  /data/{sensorId}/date/range:
+    post:
       summary: Get all logged data for a specified sensorId within a specified time range.
-      operationId: getDataRange
+      operationId: getDataForDateRange
 #      security:
 #        - api_key: []
       tags:
-        - getDataRange
+        - getDataForDateRange
       parameters:
         - name: sensorId
           in: path
@@ -100,67 +112,63 @@ paths:
           required: true
           schema:
             type: string
-        - name: fromYear
-          in: query
-          description: Get data from this year.
-          required: true
-          schema:
-            type: string
-        - name: fromMonth
-          in: query
-          description: Get data from this month.
-          required: true
-          schema:
-            type: string
-        - name: fromDate
-          in: query
-          description: Get data from this date of month.
-          required: true
-          schema:
-            type: string
-        - name: fromHour
-          in: query
-          description: Get data from this hour, 24 hour format.
-          required: false
-          schema:
-            type: string
-        - name: untilYear
-          in: query
-          description: Get data until this year.
-          required: true
-          schema:
-            type: string
-        - name: untilMonth
-          in: query
-          description: Get data until this month.
-          required: true
-          schema:
-            type: string
-        - name: untilDate
-          in: query
-          description: Get data until this date of month.
-          required: true
-          schema:
-            type: string
-        - name: untilHour
-          in: query
-          description: Get data until this hour, 24 hour format.
-          required: false
-          schema:
-            type: string
+      requestBody:
+        description: Request body specifying a from -> until date/time range
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                from:
+                  $ref: '#/components/schemas/QueryDateTime'
+                until:
+                  $ref: '#/components/schemas/QueryDateTime'
       responses:
-        201:
-          description: Expected response to a valid request.
+        200:
+          description: An array of data logged by a sensor.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/DataResponseArray"
+                $ref: "#/components/schemas/GetDataResponseArray"
         default:
           description: Unexpected error.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+
+#  /data/{sensorId}/count:
+#    get:
+#      summary: Get the total count of all logged data for a specified sensorId.
+#      operationId: getCount
+#      #      security:
+#      #        - api_key: []
+#      tags:
+#        - getCount
+#      parameters:
+#        - name: sensorId
+#          in: path
+#          description: Get the total count of data logged by this sensor.
+#          required: true
+#          schema:
+#            type: string
+#      responses:
+#        200:
+#          description: The total count of data logged
+#          content:
+#            application/json:
+#              schema:
+#                type: object
+#                properties:
+#                  count:
+#                    type: number
+#        default:
+#          description: Unexpected error.
+#          content:
+#            application/json:
+#              schema:
+#                $ref: "#/components/schemas/Error"
                 
   /sensors:
     get:
@@ -177,6 +185,32 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ListSensorsResponse"
+        default:
+          description: Unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /sensors/create:
+    post:
+      summary: Register a new sensor.
+      operationId: createSensor
+      #      security:
+      #        - api_key: []
+      tags:
+        - addSensor
+      requestBody:
+        description: Request body containing new sensorId and location.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSensorRequest'
+
+      responses:
+        201:
+          description: Null response.
         default:
           description: Unexpected error.
           content:
@@ -213,36 +247,67 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
-  /sensors/add:
-    post:
-      summary: Register a new sensor.
-      operationId: addSensor
-      #      security:
-      #        - api_key: []
-      tags:
-        - addSensor
-      requestBody:
-        description: Request body containing new sensorId and location.
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AddSensorRequest'
-
-      responses:
-        201:
-          description: Null response.
-        default:
-          description: Unexpected error.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
+#  /sensors/{sensorId}/update:
+#    post:
+#      summary: Update an existing sensor.
+#      operationId: updateSensor
+#      #      security:
+#      #        - api_key: []
+#      tags:
+#        - updateSensor
+#      parameters:
+#        - name: sensorId
+#          in: path
+#          description: Get info on this sensor.
+#          required: true
+#          schema:
+#            type: string
+#      requestBody:
+#        description: Request body containing new sensorId and location info.
+#        required: true
+#        content:
+#          application/json:
+#            schema:
+#              $ref: '#/components/schemas/CreateSensorRequest'
+#      responses:
+#        201:
+#          description: Null response.
+#        default:
+#          description: Unexpected error.
+#          content:
+#            application/json:
+#              schema:
+#                $ref: "#/components/schemas/Error"
+#
+#  /sensor/{sensorId}/delete:
+#    get:
+#      summary: Delete a registered sensor and all associated data.
+#      operationId: deleteSensor
+#      #      security:
+#      #        - api_key: []
+#      tags:
+#        - deleteSensor
+#      parameters:
+#        - name: sensorId
+#          in: path
+#          description: Delete data for this sensor.
+#          required: true
+#          schema:
+#            type: string
+#      responses:
+#        201:
+#          description: Null response.
+#        default:
+#          description: Unexpected error.
+#          content:
+#            application/json:
+#              schema:
+#                $ref: "#/components/schemas/Error"
       
     
 components:
   schemas:
-    DataRequest:
+    UpdateRequest:
       type: object
       required:
         - sensorId
@@ -257,7 +322,22 @@ components:
         humidity:
           type: integer
           format: int32
-    DataResponse:
+    QueryDateTime:
+      type: object
+      properties:
+        year:
+          type: string
+        month:
+          type: string
+        date:
+          type: string
+        hour:
+          type: string
+      required:
+        - year
+        - month
+        - date
+    GetDataResponse:
       type: object
       required:
         - temperature
@@ -272,10 +352,10 @@ components:
           format: int32
         dateTime:
           type: string
-    DataResponseArray:
+    GetDataResponseArray:
       type: array
       items:
-        $ref: "#/components/schemas/DataResponse"
+        $ref: "#/components/schemas/GetDataResponse"
     GetSensorResponse:
       type: object
       required:
@@ -293,7 +373,7 @@ components:
       type: array
       items:
         $ref: '#/components/schemas/GetSensorResponse'
-    AddSensorRequest:
+    CreateSensorRequest:
       type: object
       required:
         - sensorId

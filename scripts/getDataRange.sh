@@ -13,9 +13,11 @@ UNTIL_DATE="15"
 UNTIL_HOUR="23"
 
 # With hour specified
-curl -v "$URL/getData/$SENSOR_ID/range?fromYear=$FROM_YEAR&fromMonth=$FROM_MONTH&fromDate=$FROM_DATE&fromHour=$FROM_HOUR&untilYear=$UNTIL_YEAR&untilMonth=$UNTIL_MONTH&untilDate=$UNTIL_DATE&untilHour=$UNTIL_HOUR" \
- -H 'accept: application/json' | jq
+#curl -v -X POST "$URL/data/$SENSOR_ID/date/range" \
+# -d '{"from": {"year": "2023", "month":"12", "date":"10", "hour":"22"}, "until": {"year": "2023", "month":"12", "date":"10", "hour":"23"}}' \
+# -H 'accept: application/json' -H 'Content-Type: application/json' | jq
 
 # Without hour specified
-#curl -v "$URL/getData/$SENSOR_ID/range?fromYear=$FROM_YEAR&fromMonth=$FROM_MONTH&fromDate=$FROM_DATE&untilYear=$UNTIL_YEAR&untilMonth=$UNTIL_MONTH&untilDate=$UNTIL_DATE" \
-# -H 'accept: application/json' | jq
+curl -v -X POST "$URL/data/$SENSOR_ID/date/range" \
+ -d '{"from": {"year": "2023", "month":"12", "date":"08"}, "until": {"year": "2023", "month":"12", "date":"10"}}' \
+ -H 'accept: application/json' -H 'Content-Type: application/json' | jq

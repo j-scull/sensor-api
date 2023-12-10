@@ -56,12 +56,12 @@ public class DatabaseClient {
                 .doOnError(e -> LOGGER.info("getData - query to database failed - {}", e.getMessage()));
     }
 
-    public Single<UpdateResult> addSensor(JsonArray queryParams) {
-        LOGGER.info("addSensor - queryParams = {}", queryParams);
+    public Single<UpdateResult> createSensor(JsonArray queryParams) {
+        LOGGER.info("createSensor - queryParams = {}", queryParams);
         String query = "INSERT INTO sensor_info(sensorId, location, creationTime) VALUES (?, ?, ?)";
         return this.sqlClient.rxUpdateWithParams(query, queryParams)
-                .doOnSuccess(r -> LOGGER.info("addSensor - query to database completed successfully"))
-                .doOnError(e -> LOGGER.error("addSensor - query to database failed - {}", e.getMessage()));
+                .doOnSuccess(r -> LOGGER.info("createSensor - query to database completed successfully"))
+                .doOnError(e -> LOGGER.error("createSensor - query to database failed - {}", e.getMessage()));
     }
 
     public Single<ResultSet> listSensors() {
@@ -79,4 +79,14 @@ public class DatabaseClient {
                 .doOnSuccess(r -> LOGGER.info("getSensor - query to database completed successfully"))
                 .doOnError(e -> LOGGER.error("getSensor - query to database failed - {}", e.getMessage()));
     }
+
+    // Todo
+    // a deregister sensor Api
+    // a count entries for sensor Api
+    // a count total sensors Api
+    //
+    // Use generated model Classes
+    //
+    // Refactor this class as Service.class, contain main logic and handle requests passed from router
+
 }
