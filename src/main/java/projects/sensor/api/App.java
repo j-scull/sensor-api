@@ -1,6 +1,7 @@
 package projects.sensor.api;
 
 
+import projects.sensor.api.router.OpenApiRouter;
 
 public class App {
 

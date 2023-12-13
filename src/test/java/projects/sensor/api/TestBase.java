@@ -4,7 +4,8 @@ import org.junit.*;
 
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
-import projects.sensor.db.SqliteUtil;
+import projects.sensor.api.router.OpenApiRouter;
+import projects.sensor.api.database.SqliteUtil;
 
 import static org.junit.Assert.assertTrue;
 

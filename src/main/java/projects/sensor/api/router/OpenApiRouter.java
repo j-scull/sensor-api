@@ -1,4 +1,4 @@
-package projects.sensor.api;
+package projects.sensor.api.router;
 
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.reactivex.Single;
@@ -15,14 +15,16 @@ import io.vertx.ext.web.openapi.RouterBuilderOptions;
 import io.vertx.ext.web.validation.RequestParameter;
 import io.vertx.ext.web.validation.RequestParameters;
 import io.vertx.ext.web.validation.ValidationHandler;
+import io.vertx.reactivex.core.AbstractVerticle;
 import io.vertx.reactivex.core.Vertx;
 
 import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
+import projects.sensor.api.App;
 import projects.sensor.api.util.FileUtil;
 import projects.sensor.api.util.TimeUtil;
-import projects.sensor.db.DatabaseClient;
+import projects.sensor.api.databse.DatabaseClient;
 import projects.sensor.model.GetDataResponse;
 import projects.sensor.model.GetSensorResponse;
 
@@ -31,7 +33,7 @@ import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.List;
 
-public class OpenApiRouter {
+public class OpenApiRouter extends AbstractVerticle {
 
     private static final String SPEC_FILE = "api.yaml";
     private static final String SWAGGER_UI_DIR = "swagger-ui";
