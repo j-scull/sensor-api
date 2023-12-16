@@ -10,8 +10,6 @@ import projects.sensor.api.App;
 
 public abstract class RestServerVerticle extends AbstractVerticle {
 
-
-
     private static final int DEFAULT_PORT = 9090;
     private static final String DEFAULT_HOST = "localhost";
 
@@ -19,10 +17,7 @@ public abstract class RestServerVerticle extends AbstractVerticle {
 
     RestServerVerticle() {
 
-
-
     }
-
 
     // createHttpServer
     public void createHttpServer(Router router) {
