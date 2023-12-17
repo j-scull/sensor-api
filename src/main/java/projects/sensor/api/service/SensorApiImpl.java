@@ -6,24 +6,34 @@ import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.validation.RequestParameter;
 import io.vertx.ext.web.validation.RequestParameters;
 import io.vertx.ext.web.validation.ValidationHandler;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import projects.sensor.api.App;
+import projects.sensor.api.Main;
 import projects.sensor.api.databse.DatabaseClient;
 import projects.sensor.api.util.TimeUtil;
+
+
 
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 
+import static projects.sensor.api.util.ResponseUtil.*;
+
+/**
+ * Contains the main application logic
+ */
 public class SensorApiImpl implements SensorApi {
 
     DatabaseClient databaseClient;
 
-    private final Logger LOGGER = LoggerFactory.getLogger(App.class);
+    private final Logger LOGGER = LoggerFactory.getLogger(Main.class);
 
     public SensorApiImpl(DatabaseClient databaseClient) {
         this.databaseClient = databaseClient;
     }
+
+    // Todo - write unit tests
 
     @Override
     public void logData(RoutingContext routingContext) {
@@ -44,15 +54,8 @@ public class SensorApiImpl implements SensorApi {
         queryParams.add(temperature);
         queryParams.add(humidity);
         queryParams.add(dateTimeString);
-        this.databaseClient.logData(queryParams).subscribe(result ->
-                        routingContext.response()
-                                .setStatusCode(201)
-                                .setStatusMessage("OK")
-                                .end(),
-                e -> routingContext.response()
-                        .setStatusCode(500)
-                        .setStatusMessage("Internal Server Error")
-                        .end());
+        this.databaseClient.logData(queryParams).subscribe(result -> createdResponse(routingContext),
+                e -> internalServerError(routingContext));
     }
 
     @Override
@@ -78,14 +81,8 @@ public class SensorApiImpl implements SensorApi {
         this.databaseClient.getData(queryParams).subscribe(resultSet -> {
             JsonObject jsonResponse = new JsonObject().put("data", resultSet.getRows());
             LOGGER.info("getData - result = {}", jsonResponse.encodePrettily());
-            routingContext.response()
-                    .setStatusCode(200)
-                    .setStatusMessage("OK")
-                    .end(jsonResponse.toBuffer());
-        }, e -> routingContext.response()
-                .setStatusCode(500)
-                .setStatusMessage("Internal Server Error")
-                .end());
+            okResponse(routingContext, jsonResponse);
+        }, e -> internalServerError(routingContext));
     }
 
     @Override
@@ -108,13 +105,8 @@ public class SensorApiImpl implements SensorApi {
         this.databaseClient.getData(queryParams).subscribe(resultSet -> {
             JsonObject jsonResponse = new JsonObject().put("data", resultSet.getRows());
             LOGGER.info("getDataForDateRange - result = {}", jsonResponse.encodePrettily());
-            routingContext.response()
-                    .setStatusCode(200)
-                    .setStatusMessage("OK")
-                    .end(jsonResponse.toBuffer());
-        }, e -> routingContext.response().setStatusCode(500)
-                .setStatusMessage("Internal Server Error")
-                .end());
+            okResponse(routingContext, jsonResponse);
+        }, e -> internalServerError(routingContext));
     }
 
     @Override
@@ -135,15 +127,9 @@ public class SensorApiImpl implements SensorApi {
         LOGGER.info("createSensor - sensorId = {}, location = {}, creationTime = {}", sensorId, location, dateTimeString);
 
         databaseClient.createSensor(queryParams).subscribe(result -> {
-            routingContext.response()
-                    .setStatusCode(201)
-                    .setStatusMessage("OK")
-                    .end();
+            createdResponse(routingContext);
             LOGGER.info("createSensor complete");
-        }, e ->  routingContext.response()
-                .setStatusCode(500)
-                .setStatusMessage("Internal Server Error")
-                .end());
+        }, e -> internalServerError(routingContext));
     }
 
     @Override
@@ -153,14 +139,8 @@ public class SensorApiImpl implements SensorApi {
         databaseClient.listSensors().subscribe(resultSet -> {
             JsonObject jsonResponse = new JsonObject().put("data", resultSet.getRows());
             LOGGER.info("listSensors - result = {}", jsonResponse.encodePrettily());
-            routingContext.response()
-                    .setStatusCode(200)
-                    .setStatusMessage("OK")
-                    .end(jsonResponse.toBuffer());
-        }, e -> routingContext.response()
-                .setStatusCode(500)
-                .setStatusMessage("Internal Server Error")
-                .end());
+            okResponse(routingContext, jsonResponse);
+        }, e -> internalServerError(routingContext));
     }
 
     @Override
@@ -173,13 +153,7 @@ public class SensorApiImpl implements SensorApi {
         queryParams.add(sensorId);
         databaseClient.getSensor(queryParams).subscribe(resultSet -> {
             JsonObject jsonResponse = new JsonObject().put("data", resultSet.getRows());
-            routingContext.response()
-                    .setStatusCode(200)
-                    .setStatusMessage("OK")
-                    .end(jsonResponse.toBuffer());
-        }, e -> routingContext.response()
-                .setStatusCode(500)
-                .setStatusMessage("Internal Server Error")
-                .end());
+            okResponse(routingContext, jsonResponse);
+        }, e -> internalServerError(routingContext));
     }
 }

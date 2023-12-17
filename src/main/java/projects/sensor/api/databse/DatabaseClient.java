@@ -11,11 +11,11 @@ import io.vertx.reactivex.ext.sql.SQLClient;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import projects.sensor.api.App;
+import projects.sensor.api.Main;
 
 public class DatabaseClient {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(App.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
 
     SQLClient sqlClient;
 

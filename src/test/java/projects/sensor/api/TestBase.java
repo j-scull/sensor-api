@@ -6,6 +6,7 @@ import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 import projects.sensor.api.router.OpenApiRouter;
 import projects.sensor.api.database.SqliteUtil;
+import projects.sensor.api.verticle.RestServerVerticle;
 
 import static org.junit.Assert.assertTrue;
 
@@ -20,9 +21,10 @@ public class TestBase {
 
     @Before
     public void setup(){
+        // Todo - Fix and expand tests
         SqliteUtil.createTables(databaseUrl);
-        router = new OpenApiRouter();
-        router.loadSpec();
+        RestServerVerticle restServerVerticle = new RestServerVerticle();
+        restServerVerticle.start();
     }
 
     @Test

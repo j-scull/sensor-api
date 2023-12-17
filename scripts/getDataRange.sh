@@ -9,15 +9,15 @@ FROM_DATE="01"
 FROM_HOUR="00"
 UNTIL_YEAR="2023"
 UNTIL_MONTH="12"
-UNTIL_DATE="15"
+UNTIL_DATE="17"
 UNTIL_HOUR="23"
 
 # With hour specified
 #curl -v -X POST "$URL/data/$SENSOR_ID/date/range" \
-# -d '{"from": {"year": "2023", "month":"12", "date":"10", "hour":"22"}, "until": {"year": "2023", "month":"12", "date":"10", "hour":"23"}}' \
+# -d '{"from": {"year": "2023", "month":"12", "date":"17", "hour":"22"}, "until": {"year": "2023", "month":"12", "date":"17", "hour":"23"}}' \
 # -H 'accept: application/json' -H 'Content-Type: application/json' | jq
 
 # Without hour specified
 curl -v -X POST "$URL/data/$SENSOR_ID/date/range" \
- -d '{"from": {"year": "2023", "month":"12", "date":"08"}, "until": {"year": "2023", "month":"12", "date":"10"}}' \
+ -d '{"from": {"year": "2023", "month":"12", "date":"08"}, "until": {"year": "2023", "month":"12", "date":"17"}}' \
  -H 'accept: application/json' -H 'Content-Type: application/json' | jq

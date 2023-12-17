@@ -1,11 +1,6 @@
 package projects.sensor.api.service;
 
-import io.vertx.core.Future;
 import io.vertx.ext.web.RoutingContext;
-import projects.sensor.ApiResponse;
-import projects.sensor.model.*;
-
-import java.util.List;
 
 public interface SensorApi {
     public void logData(RoutingContext routingContext);

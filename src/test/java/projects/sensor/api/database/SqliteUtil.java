@@ -2,7 +2,7 @@ package projects.sensor.api.database;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import projects.sensor.api.App;
+import projects.sensor.api.Main;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -15,7 +15,7 @@ import java.sql.Statement;
  */
 public class SqliteUtil {
 
-    private static final Logger logger = LoggerFactory.getLogger(App.class);
+    private static final Logger logger = LoggerFactory.getLogger(Main.class);
 
     public static void createTables(String url) {
 
