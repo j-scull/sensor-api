@@ -16,6 +16,8 @@
 
     <junit.version>4.11</junit.version>
     <mockito.version>5.7.0</mockito.version>
+    <easymock.version>5.2.0</easymock.version>
+
     <slf4j.version>2.0.7</slf4j.version>
 
     <vertx.version>4.4.6</vertx.version>
@@ -42,6 +44,13 @@
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
       <version>${mockito.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.easymock</groupId>
+      <artifactId>easymock</artifactId>
+      <version>${easymock.version}</version>
       <scope>test</scope>
     </dependency>
 

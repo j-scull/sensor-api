@@ -14,4 +14,5 @@ buildNumber.properties
 main.iml
 test.iml
 
+# For testing purposes the swagger-ui is currently extracted to the project directory
 swagger-ui/

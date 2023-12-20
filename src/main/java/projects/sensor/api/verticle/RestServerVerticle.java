@@ -9,7 +9,7 @@ import io.vertx.reactivex.core.AbstractVerticle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import projects.sensor.api.Main;
-import projects.sensor.api.databse.DatabaseClient;
+import projects.sensor.api.databse.SQLiteClient;
 import projects.sensor.api.router.OpenApiRouter;
 import projects.sensor.api.service.SensorApiImpl;
 
@@ -30,12 +30,10 @@ public class RestServerVerticle extends AbstractVerticle {
         String databasePath = System.getProperty("user.dir") + "/target/db/test.db";
         String databaseUrl = "jdbc:sqlite:" + databasePath;
         String databaseDriverClass = "org.sqlite.JDBC";
-
-        // Todo keep all database implementation within DataBaseClient
-        DatabaseClient databaseClient = DatabaseClient.getInstance();
-        databaseClient.connectToDatabase(vertx, databaseUrl, databaseDriverClass);
+        SQLiteClient databaseClient = new SQLiteClient(vertx, databaseUrl, databaseDriverClass);
 
         SensorApiImpl sensorApiImpl = new SensorApiImpl(databaseClient);
+
         OpenApiRouter openApiRouter = new OpenApiRouter(vertx, sensorApiImpl);
         openApiRouter.buildRouterFromSpec()
                 .andThen(routerAsyncResult -> createHttpServer(routerAsyncResult.result()))

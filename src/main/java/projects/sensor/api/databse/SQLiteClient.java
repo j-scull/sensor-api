@@ -13,69 +13,59 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import projects.sensor.api.Main;
 
-public class DatabaseClient {
+public class SQLiteClient implements DataBaseClient {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
 
+    private final String insertDataQuery = "INSERT INTO temperature_and_humidity (sensorId, temperature, humidity, time) VALUES (?, ?, ?, ?)";
+    private final String selectDataQuery = "SELECT * FROM temperature_and_humidity WHERE time >= ? AND time < ?";
+    private final String insertSensorQuery = "INSERT INTO sensor_info(sensorId, location, creationTime) VALUES (?, ?, ?)";
+    private final String selectAllSensorsQuery = "SELECT * FROM sensor_info";
+    private final String selectSensorQuery = "SELECT * FROM sensor_info WHERE sensorId = ?";
+
     SQLClient sqlClient;
 
-    private DatabaseClient() {}
-    private static class DatabaseClientHolder{
-        public static final DatabaseClient instance = new DatabaseClient();
-    }
-
-    public static DatabaseClient getInstance() {
-        return DatabaseClientHolder.instance;
-    }
-
-    public void connectToDatabase(Vertx vertx, String url, String driverClass) {
-
+    public SQLiteClient(Vertx vertx, String url, String driverClass) {
         JsonObject config = new JsonObject()
                 .put("url", url)
                 .put("driver_class", driverClass)
                 .put("max_pool_size", 30);
-
-        LOGGER.info("Connecting to database with config = {}", config);
-        sqlClient = JDBCClient.createShared(vertx, config);
+        LOGGER.info("Connecting to database with config = {}",config);
+        sqlClient = JDBCClient.createShared(vertx,config);
     }
 
     // Should the database be queried first to verify sensorId is registered in sensor_info?
-    public Single<UpdateResult> logData(JsonArray queryParams) {
+    public Single<UpdateResult> insertData(JsonArray queryParams) {
         LOGGER.info(String.valueOf(queryParams));
-        String query = "INSERT INTO temperature_and_humidity (sensorId, temperature, humidity, time) VALUES (?, ?, ?, ?)";
-        return this.sqlClient.rxUpdateWithParams(query, queryParams)
+        return this.sqlClient.rxUpdateWithParams(insertDataQuery, queryParams)
                 .doOnSuccess(s -> LOGGER.info("logData - query to database completed successfully"))
                 .doOnError(e -> LOGGER.info("logData - query to database failed - {}", e.getMessage()));
     }
 
-    public Single<ResultSet> getData(JsonArray queryParams) {
+    public Single<ResultSet> selectData(JsonArray queryParams) {
         LOGGER.info("getData - queryParams = {}", queryParams);
-        String query = "SELECT * FROM temperature_and_humidity WHERE time >= ? AND time < ?";
-        return this.sqlClient.rxQueryWithParams(query, queryParams)
+        return this.sqlClient.rxQueryWithParams(selectDataQuery, queryParams)
                 .doOnSuccess(s -> LOGGER.info("getData - query to database completed successfully"))
                 .doOnError(e -> LOGGER.info("getData - query to database failed - {}", e.getMessage()));
     }
 
-    public Single<UpdateResult> createSensor(JsonArray queryParams) {
+    public Single<UpdateResult> insertSensor(JsonArray queryParams) {
         LOGGER.info("createSensor - queryParams = {}", queryParams);
-        String query = "INSERT INTO sensor_info(sensorId, location, creationTime) VALUES (?, ?, ?)";
-        return this.sqlClient.rxUpdateWithParams(query, queryParams)
+        return this.sqlClient.rxUpdateWithParams(insertSensorQuery, queryParams)
                 .doOnSuccess(r -> LOGGER.info("createSensor - query to database completed successfully"))
                 .doOnError(e -> LOGGER.error("createSensor - query to database failed - {}", e.getMessage()));
     }
 
-    public Single<ResultSet> listSensors() {
+    public Single<ResultSet> selectAllSensors() {
         LOGGER.info("listSensors - no queryParams");
-        String query = "SELECT * FROM sensor_info";
-        return this.sqlClient.rxQuery(query)
+        return this.sqlClient.rxQuery(selectAllSensorsQuery)
                 .doOnSuccess(r -> LOGGER.info("listSensor - query to database completed successfully"))
                 .doOnError(e -> LOGGER.error("listSensor - query to database failed - {}", e.getMessage()));
     }
 
-    public Single<ResultSet> getSensor(JsonArray queryParams) {
+    public Single<ResultSet> selectSensor(JsonArray queryParams) {
         LOGGER.info("getSensor - queryParams = {}", queryParams);
-        String query = "SELECT * FROM sensor_info WHERE sensorId = ?";
-        return this.sqlClient.rxQueryWithParams(query, queryParams)
+        return this.sqlClient.rxQueryWithParams(selectSensorQuery, queryParams)
                 .doOnSuccess(r -> LOGGER.info("getSensor - query to database completed successfully"))
                 .doOnError(e -> LOGGER.error("getSensor - query to database failed - {}", e.getMessage()));
     }

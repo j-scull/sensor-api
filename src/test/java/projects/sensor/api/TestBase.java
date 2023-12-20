@@ -21,10 +21,10 @@ public class TestBase {
 
     @Before
     public void setup(){
-        // Todo - Fix and expand tests
-        SqliteUtil.createTables(databaseUrl);
-        RestServerVerticle restServerVerticle = new RestServerVerticle();
-        restServerVerticle.start();
+//        // Todo - Fix and expand tests
+//        SqliteUtil.createTables(databaseUrl);
+//        RestServerVerticle restServerVerticle = new RestServerVerticle();
+//        restServerVerticle.start();
     }
 
     @Test

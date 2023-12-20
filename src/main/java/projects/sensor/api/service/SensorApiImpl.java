@@ -10,7 +10,8 @@ import io.vertx.ext.web.validation.ValidationHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import projects.sensor.api.Main;
-import projects.sensor.api.databse.DatabaseClient;
+import projects.sensor.api.databse.DataBaseClient;
+import projects.sensor.api.databse.SQLiteClient;
 import projects.sensor.api.util.TimeUtil;
 
 
@@ -25,11 +26,11 @@ import static projects.sensor.api.util.ResponseUtil.*;
  */
 public class SensorApiImpl implements SensorApi {
 
-    DatabaseClient databaseClient;
+    DataBaseClient databaseClient;
 
     private final Logger LOGGER = LoggerFactory.getLogger(Main.class);
 
-    public SensorApiImpl(DatabaseClient databaseClient) {
+    public SensorApiImpl(DataBaseClient databaseClient) {
         this.databaseClient = databaseClient;
     }
 
@@ -54,7 +55,7 @@ public class SensorApiImpl implements SensorApi {
         queryParams.add(temperature);
         queryParams.add(humidity);
         queryParams.add(dateTimeString);
-        this.databaseClient.logData(queryParams).subscribe(result -> createdResponse(routingContext),
+        this.databaseClient.insertData(queryParams).subscribe(result -> createdResponse(routingContext),
                 e -> internalServerError(routingContext));
     }
 
@@ -78,7 +79,7 @@ public class SensorApiImpl implements SensorApi {
         queryParams.add(from);
         queryParams.add(until);
 
-        this.databaseClient.getData(queryParams).subscribe(resultSet -> {
+        this.databaseClient.selectData(queryParams).subscribe(resultSet -> {
             JsonObject jsonResponse = new JsonObject().put("data", resultSet.getRows());
             LOGGER.info("getData - result = {}", jsonResponse.encodePrettily());
             okResponse(routingContext, jsonResponse);
@@ -102,7 +103,7 @@ public class SensorApiImpl implements SensorApi {
         queryParams.add(from);
         queryParams.add(until);
 
-        this.databaseClient.getData(queryParams).subscribe(resultSet -> {
+        this.databaseClient.selectData(queryParams).subscribe(resultSet -> {
             JsonObject jsonResponse = new JsonObject().put("data", resultSet.getRows());
             LOGGER.info("getDataForDateRange - result = {}", jsonResponse.encodePrettily());
             okResponse(routingContext, jsonResponse);
@@ -126,7 +127,7 @@ public class SensorApiImpl implements SensorApi {
 
         LOGGER.info("createSensor - sensorId = {}, location = {}, creationTime = {}", sensorId, location, dateTimeString);
 
-        databaseClient.createSensor(queryParams).subscribe(result -> {
+        databaseClient.insertSensor(queryParams).subscribe(result -> {
             createdResponse(routingContext);
             LOGGER.info("createSensor complete");
         }, e -> internalServerError(routingContext));
@@ -136,7 +137,7 @@ public class SensorApiImpl implements SensorApi {
     public void listSensors(RoutingContext routingContext) {
         LOGGER.info("listSensors - no params");
 
-        databaseClient.listSensors().subscribe(resultSet -> {
+        databaseClient.selectAllSensors().subscribe(resultSet -> {
             JsonObject jsonResponse = new JsonObject().put("data", resultSet.getRows());
             LOGGER.info("listSensors - result = {}", jsonResponse.encodePrettily());
             okResponse(routingContext, jsonResponse);
@@ -151,7 +152,7 @@ public class SensorApiImpl implements SensorApi {
 
         JsonArray queryParams = new JsonArray();
         queryParams.add(sensorId);
-        databaseClient.getSensor(queryParams).subscribe(resultSet -> {
+        databaseClient.selectSensor(queryParams).subscribe(resultSet -> {
             JsonObject jsonResponse = new JsonObject().put("data", resultSet.getRows());
             okResponse(routingContext, jsonResponse);
         }, e -> internalServerError(routingContext));

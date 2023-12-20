@@ -22,6 +22,10 @@ public class ResponseUtil {
                 .end(jsonObject.toBuffer());
     }
 
+    /**
+     * 201 "Created" response
+     * @param routingContext
+     */
     public static void createdResponse(RoutingContext routingContext) {
         routingContext.response()
                 .setStatusCode(201)
