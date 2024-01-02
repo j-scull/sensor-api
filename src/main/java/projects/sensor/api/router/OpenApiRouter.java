@@ -14,20 +14,19 @@ import org.slf4j.Logger;
 
 import projects.sensor.api.Main;
 import projects.sensor.api.service.SensorApiImpl;
+import projects.sensor.api.util.ResponseUtil;
 
 import static projects.sensor.api.util.FileUtil.copyFile;
 import static projects.sensor.api.util.FileUtil.extractFilesToDirectory;
 import static projects.sensor.api.util.FileUtil.replaceFile;
-import static projects.sensor.api.util.ResponseUtil.badRequestResponse;
-import static projects.sensor.api.util.ResponseUtil.notFoundResponse;
 
 public class OpenApiRouter extends AbstractVerticle {
 
     private static final String SPEC_FILE = "api.yaml";
     private static final String SWAGGER_UI_DIR = "swagger-ui";
 
-    private Vertx vertx;
-    private SensorApiImpl sensorApiImpl;
+    private final Vertx vertx;
+    private final SensorApiImpl sensorApiImpl;
     private final Logger LOGGER = LoggerFactory.getLogger(Main.class);
 
     public OpenApiRouter(Vertx vertx, SensorApiImpl sensorApiImpl) {
@@ -60,28 +59,28 @@ public class OpenApiRouter extends AbstractVerticle {
 
                     // Add handlers to the operations defined in the spec.
                     routerBuilder.operation("logData")
-                            .handler(routingContext -> sensorApiImpl.logData(routingContext))
-                            .failureHandler(routingContext -> badRequestResponse(routingContext));
+                            .handler(sensorApiImpl::logData)
+                            .failureHandler(ResponseUtil::badRequestResponse);
 
                     routerBuilder.operation("getDataForDate")
-                            .handler(routingContext -> sensorApiImpl.getDataForDate(routingContext))
-                            .failureHandler(routingContext -> badRequestResponse(routingContext));
+                            .handler(sensorApiImpl::getDataForDate)
+                            .failureHandler(ResponseUtil::badRequestResponse);
 
                     routerBuilder.operation("getDataForDateRange")
-                            .handler(routingContext -> sensorApiImpl.getDataForDateRange(routingContext))
-                            .failureHandler(routingContext -> badRequestResponse(routingContext));
+                            .handler(sensorApiImpl::getDataForDateRange)
+                            .failureHandler(ResponseUtil::badRequestResponse);
 
                     routerBuilder.operation("createSensor")
-                            .handler(routingContext -> sensorApiImpl.createSensor(routingContext))
-                            .failureHandler(routingContext -> badRequestResponse(routingContext));
+                            .handler(sensorApiImpl::createSensor)
+                            .failureHandler(ResponseUtil::badRequestResponse);
 
                     routerBuilder.operation("listSensors")
-                            .handler(routingContext -> sensorApiImpl.listSensors(routingContext))
-                            .failureHandler(routingContext -> badRequestResponse(routingContext));
+                            .handler(sensorApiImpl::listSensors)
+                            .failureHandler(ResponseUtil::badRequestResponse);
 
                     routerBuilder.operation("getSensor")
-                            .handler(routingContext -> sensorApiImpl.getSensor(routingContext))
-                            .failureHandler(routingContext -> badRequestResponse(routingContext));
+                            .handler(sensorApiImpl::getSensor)
+                            .failureHandler(ResponseUtil::badRequestResponse);
 
                     return routerBuilder;
                 })
@@ -93,12 +92,12 @@ public class OpenApiRouter extends AbstractVerticle {
                     mountSwaggerUI(router);
 
                     // Handle request for unknown paths
-                    router.errorHandler(404, routingContext -> notFoundResponse(routingContext));
+                    router.errorHandler(404, ResponseUtil::notFoundResponse);
 
                     return router;
                 })
                 .onSuccess(r -> LOGGER.info("OpenApiRouter - Spec loaded successfully"))
-                .onFailure(e -> LOGGER.error("OpenApiRouter - Failed to load spec! Exception = {}", e));
+                .onFailure(e -> LOGGER.error("OpenApiRouter - Failed to load spec! Exception = {}", e.getCause()));
     }
 
     /**

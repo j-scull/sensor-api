@@ -13,7 +13,7 @@ public class TimeUtil {
      * @param month
      * @param date
      * @param hour
-     * @return
+     * @return a String representing a datetime in format "y-MM-dd HH" if an hour is provided, otherwise format "y-MM-dd"
      */
     public static String getDateTimeString(String year, String month, String date, String hour) {
         StringBuilder dateTimeString = new StringBuilder();
@@ -32,8 +32,8 @@ public class TimeUtil {
 
     /**
      *
-     * @param jsonObject
-     * @return
+     * @param jsonObject a json object with fields "year", "month", "date" and optionally "hour"
+     * @return a String representing a datetime in format "y-MM-dd HH" if an hour is provided, otherwise format "y-MM-dd"
      */
     public static String getDateTimeString(JsonObject jsonObject) {
         return getDateTimeString(jsonObject.getString("year"), jsonObject.getString("month"), 
@@ -42,8 +42,10 @@ public class TimeUtil {
 
     /**
      *
-     * @param jsonObject
-     * @return
+     * @param jsonObject a json object with fields "year", "month", "date" and optionally "hour"
+     * @return  a String representing a datetime in format "y-MM-dd HH" if an hour is provided, otherwise format "y-MM-dd"
+     *          the returned date will be incremented by an hour if "hour" is in the jsonObject
+     *          otherwise the returned date will be incremented by a calendar date.
      */
     public static String getDateTimeStringNextInterval(JsonObject jsonObject) {
         if (jsonObject.getString("hour") != null) {
@@ -60,8 +62,9 @@ public class TimeUtil {
      * @param year
      * @param month
      * @param date
-     * @param n
-     * @return
+     * @param n the number of days to add to the given date
+     * @return a String representing a datetime in format "y-MM-dd", i.e. "2024-01-02"
+     *         the returned date will increment the provided date by "n" calendar days
      */
     public static String getDateTimeStringPlusDates(String year, String month, String date, int n) {
         Calendar calendar = Calendar.getInstance();
@@ -76,8 +79,9 @@ public class TimeUtil {
      * @param month
      * @param date
      * @param hour
-     * @param n
-     * @return
+     * @param n the number of hour to add to the given time
+     * @return a String representing a datetime in format "y-MM-dd HH", i.e. "2024-01-02 18"
+     *         the returned date will increment the provided date by "n" hours
      */
     public static String getDateTimeStringPlusHours(String year, String month, String date, String hour, int n) {
         Calendar calendar = Calendar.getInstance();
