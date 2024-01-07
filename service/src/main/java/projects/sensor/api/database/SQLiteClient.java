@@ -1,4 +1,4 @@
-package projects.sensor.api.databse;
+package projects.sensor.api.database;
 
 import io.reactivex.Single;
 import io.vertx.core.json.JsonArray;

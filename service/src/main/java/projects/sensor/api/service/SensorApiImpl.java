@@ -12,7 +12,7 @@ import io.vertx.ext.web.validation.ValidationHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import projects.sensor.api.Main;
-import projects.sensor.api.databse.DataBaseClient;
+import projects.sensor.api.database.DataBaseClient;
 import projects.sensor.model.UpdateRequest;
 import projects.sensor.api.util.TimeUtil;
 

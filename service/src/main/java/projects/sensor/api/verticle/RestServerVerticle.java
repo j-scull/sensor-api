@@ -9,7 +9,7 @@ import io.vertx.reactivex.core.AbstractVerticle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import projects.sensor.api.Main;
-import projects.sensor.api.databse.SQLiteClient;
+import projects.sensor.api.database.SQLiteClient;
 import projects.sensor.api.router.OpenApiRouter;
 import projects.sensor.api.service.SensorApiImpl;
 

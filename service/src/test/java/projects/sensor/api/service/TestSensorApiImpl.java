@@ -2,7 +2,6 @@ package projects.sensor.api.service;
 
 import io.reactivex.Single;
 
-import io.vertx.core.Future;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -16,7 +15,7 @@ import org.easymock.TestSubject;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
-import projects.sensor.api.databse.DataBaseClient;
+import projects.sensor.api.database.DataBaseClient;
 
 import java.util.HashMap;
 import java.util.Map;
