@@ -2,7 +2,9 @@ package projects.sensor.api.router;
 
 import io.reactivex.Single;
 import io.vertx.core.Future;
+import io.vertx.core.Handler;
 import io.vertx.ext.web.Router;
+import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.StaticHandler;
 import io.vertx.ext.web.openapi.RouterBuilder;
 import io.vertx.ext.web.openapi.RouterBuilderOptions;
@@ -55,32 +57,13 @@ public class OpenApiRouter extends AbstractVerticle {
                     options.setOperationModelKey("operationModel");
                     routerBuilder.setOptions(options);
 
-                    // Todo - add validation handlers
-
                     // Add handlers to the operations defined in the spec.
-                    routerBuilder.operation("logData")
-                            .handler(sensorApiImpl::logData)
-                            .failureHandler(ResponseUtil::badRequestResponse);
-
-                    routerBuilder.operation("getDataForDate")
-                            .handler(sensorApiImpl::getDataForDate)
-                            .failureHandler(ResponseUtil::badRequestResponse);
-
-                    routerBuilder.operation("getDataForDateRange")
-                            .handler(sensorApiImpl::getDataForDateRange)
-                            .failureHandler(ResponseUtil::badRequestResponse);
-
-                    routerBuilder.operation("createSensor")
-                            .handler(sensorApiImpl::createSensor)
-                            .failureHandler(ResponseUtil::badRequestResponse);
-
-                    routerBuilder.operation("listSensors")
-                            .handler(sensorApiImpl::listSensors)
-                            .failureHandler(ResponseUtil::badRequestResponse);
-
-                    routerBuilder.operation("getSensor")
-                            .handler(sensorApiImpl::getSensor)
-                            .failureHandler(ResponseUtil::badRequestResponse);
+                    addHandler(routerBuilder, "logData", sensorApiImpl::logData);
+                    addHandler(routerBuilder, "getDataForDate", sensorApiImpl::getDataForDate);
+                    addHandler(routerBuilder, "getDataForDateRange", sensorApiImpl::getDataForDateRange);
+                    addHandler(routerBuilder, "createSensor", sensorApiImpl::createSensor);
+                    addHandler(routerBuilder, "listSensors", sensorApiImpl::listSensors);
+                    addHandler(routerBuilder, "getSensor", sensorApiImpl::getSensor);
 
                     return routerBuilder;
                 })
@@ -98,6 +81,16 @@ public class OpenApiRouter extends AbstractVerticle {
                 })
                 .onSuccess(r -> LOGGER.info("OpenApiRouter - Spec loaded successfully"))
                 .onFailure(e -> LOGGER.error("OpenApiRouter - Failed to load spec! Exception = {}", e.getCause()));
+    }
+
+    /**
+     * Add a handler to the specified operation
+     * @param routerBuilder - routerBuilder
+     * @param operationId - the operationId defined in api.yaml
+     * @param operationHandler - the handler for the opertion
+     */
+    private void addHandler(RouterBuilder routerBuilder, String operationId, Handler<RoutingContext> operationHandler) {
+        routerBuilder.operation(operationId).handler(operationHandler).failureHandler(ResponseUtil::badRequestResponse);
     }
 
     /**

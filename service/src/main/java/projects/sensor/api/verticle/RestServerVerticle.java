@@ -27,7 +27,7 @@ public class RestServerVerticle extends AbstractVerticle {
         DatabindCodec.mapper().registerModule(new JavaTimeModule());
 
         // Todo - these fields should be read from config
-        String databasePath = System.getProperty("user.dir") + "/target/db/test.db";
+        String databasePath = System.getProperty("user.dir") + "/service/target/db/test.db";
         String databaseUrl = "jdbc:sqlite:" + databasePath;
         String databaseDriverClass = "org.sqlite.JDBC";
         SQLiteClient databaseClient = new SQLiteClient(vertx, databaseUrl, databaseDriverClass);

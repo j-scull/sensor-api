@@ -76,7 +76,5 @@ public class SQLiteClient implements DataBaseClient {
     // a count total sensors Api
     //
     // Use generated model Classes
-    //
-    // Refactor this class as Service.class, contain main logic and handle requests passed from router
 
 }

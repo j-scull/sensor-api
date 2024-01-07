@@ -11,8 +11,7 @@ buildNumber.properties
 .mvn/wrapper/maven-wrapper.jar
 
 .idea/
-main.iml
-test.iml
+*.iml
 
 # For testing purposes the swagger-ui is currently extracted to the project directory
 swagger-ui/

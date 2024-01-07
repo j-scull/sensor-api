@@ -1,7 +1,9 @@
 package projects.sensor.api.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.json.jackson.DatabindCodec;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.validation.RequestParameter;
 import io.vertx.ext.web.validation.RequestParameters;
@@ -11,10 +13,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import projects.sensor.api.Main;
 import projects.sensor.api.databse.DataBaseClient;
-import projects.sensor.api.databse.SQLiteClient;
+import projects.sensor.model.UpdateRequest;
 import projects.sensor.api.util.TimeUtil;
-
-
 
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
@@ -38,22 +38,23 @@ public class SensorApiImpl implements SensorApi {
 
     @Override
     public void logData(RoutingContext routingContext) {
+
+        // Parse the request
         RequestParameters params = routingContext.get(ValidationHandler.REQUEST_CONTEXT_KEY);
         RequestParameter body = params.body();
-        JsonObject jsonBody = body.getJsonObject();
-        String sensorId = jsonBody.getString("sensorId");
-        String temperature = jsonBody.getString("temperature");
-        String humidity = jsonBody.getString("humidity");
+        UpdateRequest updateRequest = body != null ? DatabindCodec.mapper().convertValue(body.get(), new TypeReference<UpdateRequest>(){}) : null;
+
+        // Add a timestamp to logged with the data
         Timestamp timestamp = new java.sql.Timestamp(System.currentTimeMillis());
         String dateTimeString = new SimpleDateFormat("y-MM-dd HH:mm:ss.SSS").format(timestamp);
-        LOGGER.info("logData - sensorId = {}, temperature = {}, humidity = {}, time = {}", sensorId, temperature, humidity, dateTimeString);  // Todo - change log level to debug
+        LOGGER.info("logData - request = {}, time = {}", updateRequest, dateTimeString);  // Todo - change log level to debug
 
-        // Todo - validate data. Ensure sensorId is in the database
-
+        // Todo look into codegen - generate pojos should be using @NotNull for required parameters
+        // Extract queryParams and pass to database client
         JsonArray queryParams = new JsonArray();
-        queryParams.add(sensorId);
-        queryParams.add(temperature);
-        queryParams.add(humidity);
+        queryParams.add(updateRequest.getSensorId());
+        queryParams.add(updateRequest.getTemperature());
+        queryParams.add(updateRequest.getHumidity());
         queryParams.add(dateTimeString);
         this.databaseClient.insertData(queryParams).subscribe(result -> createdResponse(routingContext),
                 e -> internalServerError(routingContext));
