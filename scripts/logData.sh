@@ -7,5 +7,4 @@ URL="http://localhost:$PORT"
 SENSOR_ID=123
 
 curl -v -X 'POST' "$URL/data" -H 'accept: application/json' -H 'Content-Type: application/json' \
-  -d '{"sensorId":"123", "temperature":9, "humidity":87}'
-
+  -d '{"sensorId":"123", "temperature":5, "humidity":90}'

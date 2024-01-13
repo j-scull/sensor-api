@@ -38,11 +38,14 @@ public class ResponseUtil {
      * @param routingContext
      */
      public static void badRequestResponse(RoutingContext routingContext) {
-        JsonObject operation = routingContext.get("operationModel");
         routingContext.response()
                 .setStatusCode(400)
                 .setStatusMessage("Bad Request")
-                .end();
+                .putHeader(HttpHeaders.CONTENT_TYPE, "application/json")
+                .end(new JsonObject()
+                        .put("code", 400)
+                        .put("message", (routingContext.failure() != null) ? routingContext.failure().getMessage() : "Bad Request")
+                        .encode());
     }
 
     /**
@@ -50,15 +53,14 @@ public class ResponseUtil {
      * @param routingContext
      */
     public static void notFoundResponse(RoutingContext routingContext) {
-        JsonObject errorObject = new JsonObject();
-        errorObject.put("code", 404);
-        errorObject.put("message",
-                (routingContext.failure() != null) ? routingContext.failure().getMessage() : "Not Found"
-        );
         routingContext.response()
                 .setStatusCode(404)
+                .setStatusMessage("Not Found")
                 .putHeader(HttpHeaders.CONTENT_TYPE, "application/json")
-                .end(errorObject.encode());
+                .end(new JsonObject()
+                        .put("code", 404)
+                        .put("message", (routingContext.failure() != null) ? routingContext.failure().getMessage() : "Not Found")
+                        .encode());
     }
 
     /**

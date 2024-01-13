@@ -39,7 +39,7 @@ public class SensorApiImpl implements SensorApi {
     @Override
     public void logData(RoutingContext routingContext) {
 
-        // Parse the request
+        // Parse the request, vertx will validate requests against the api specification
         RequestParameters params = routingContext.get(ValidationHandler.REQUEST_CONTEXT_KEY);
         RequestParameter body = params.body();
         UpdateRequest updateRequest = body != null ? DatabindCodec.mapper().convertValue(body.get(), new TypeReference<UpdateRequest>(){}) : null;
@@ -49,7 +49,6 @@ public class SensorApiImpl implements SensorApi {
         String dateTimeString = new SimpleDateFormat("y-MM-dd HH:mm:ss.SSS").format(timestamp);
         LOGGER.info("logData - request = {}, time = {}", updateRequest, dateTimeString);  // Todo - change log level to debug
 
-        // Todo look into codegen - generate pojos should be using @NotNull for required parameters
         // Extract queryParams and pass to database client
         JsonArray queryParams = new JsonArray();
         queryParams.add(updateRequest.getSensorId());
