@@ -322,6 +322,8 @@ components:
         humidity:
           type: integer
           format: int32
+          minimum: 0
+          maximum: 100
     QueryDateTime:
       type: object
       properties:
@@ -350,6 +352,8 @@ components:
         humidity:
           type: integer
           format: int32
+          minimum: 0
+          maximum: 100
         dateTime:
           type: string
     GetDataResponseArray:
