@@ -5,7 +5,7 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.ext.sql.ResultSet;
 import io.vertx.ext.sql.UpdateResult;
 
-public interface DataBaseClient {
+public interface DatabaseClient {
 
     /**
      *

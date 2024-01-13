@@ -15,7 +15,8 @@ import java.sql.Statement;
  */
 public class SqliteUtil {
 
-    private static final Logger logger = LoggerFactory.getLogger(Main.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
+    
 
     public static void createTables(String url) {
 
@@ -46,9 +47,9 @@ public class SqliteUtil {
 
              Statement stmt = conn.createStatement()) {
             // create a new table
-            logger.info("Executing query = {}", sensorTableQuery);
+            LOGGER.info("Executing query = {}", sensorTableQuery);
             stmt.execute(sensorTableQuery);
-            logger.info("Executing query = {}", dataTableQuery);
+            LOGGER.info("Executing query = {}", dataTableQuery);
             stmt.execute(dataTableQuery);
 
         } catch (SQLException e) {
@@ -65,44 +66,13 @@ public class SqliteUtil {
 
              Statement stmt = conn.createStatement()) {
             // create a new table
-            logger.info("Executing query = {}", dropSensorTable);
+            LOGGER.info("Executing query = {}", dropSensorTable);
             stmt.execute(dropSensorTable);
-            logger.info("Executing query = {}", dropDataTable);
+            LOGGER.info("Executing query = {}", dropDataTable);
             stmt.execute(dropDataTable );
 
         } catch (SQLException e) {
             System.out.println(e.getMessage());
         }
     }
-
-
-//    /**
-//     * Connect to a sample database
-//     *
-//     * @param fileName the database file name
-//     */
-//    public static void createNewDatabase(String fileName) {
-//
-//        String testDatabasePath = System.getProperty("user.dir") + "/target/db/" + fileName;
-//        String url = "jdbc:sqlite:" + testDatabasePath;
-//
-//        try (Connection conn = DriverManager.getConnection(url)) {
-//            if (conn != null) {
-//                DatabaseMetaData meta = conn.getMetaData();
-//                logger.info("Database driver name is " + meta.getDriverName());
-//                logger.info("Created database at {}", testDatabasePath);
-//            }
-//
-//        } catch (SQLException e) {
-//            logger.error("Failed to create database = {}, Exception = {}", url, e);
-//            System.out.println(e.getMessage());
-//        }
-//    }
-//
-//    /**
-//     * @param args the command line arguments
-//     */
-//    public static void main(String[] args) {
-//        createNewDatabase("test.db");
-//    }
 }

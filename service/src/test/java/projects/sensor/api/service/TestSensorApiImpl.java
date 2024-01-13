@@ -12,10 +12,11 @@ import io.vertx.ext.web.validation.RequestParameters;
 import io.vertx.ext.web.validation.impl.RequestParameterImpl;
 import io.vertx.ext.web.validation.impl.RequestParametersImpl;
 import org.easymock.TestSubject;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
-import projects.sensor.api.database.DataBaseClient;
+import projects.sensor.api.database.DatabaseClient;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -26,27 +27,29 @@ import static org.mockito.ArgumentMatchers.any;
 @RunWith(MockitoJUnitRunner.class)
 public class TestSensorApiImpl {
 
+
     @TestSubject
-    SensorApiImpl sensorApiImpl;
+    private SensorApiImpl sensorApiImpl;
+//    @TestSubject
+    private DatabaseClient dataBaseClient;
 
     // Mocks
-    DataBaseClient dataBaseClient;
-    RoutingContext routingContext;
+    private RoutingContext routingContext;
+    private HttpServerResponse httpServerResponse;
 
-//    @Mock
-    HttpServerResponse httpServerResponse;
+    @Before
+    public void setup() {
 
-    private void setup() {
-        dataBaseClient = createMock(DataBaseClient.class);
+        // Set up mocks
+        dataBaseClient = createMock(DatabaseClient.class);
         routingContext = createMock(RoutingContext.class);
         httpServerResponse = createMock(HttpServerResponse.class);
+
         sensorApiImpl = new SensorApiImpl(dataBaseClient);
     }
 
     @Test
-    public void testLogData_validParams() {
-
-        setup();
+    public void testLogData_Success() {
 
         // Create request body
         JsonObject jsonBody = new JsonObject();
@@ -72,21 +75,42 @@ public class TestSensorApiImpl {
         sensorApiImpl.logData(routingContext);
 
         verify(routingContext, dataBaseClient, httpServerResponse);
-
     }
 
     @Test
-    public void testLogData_invalidParams() {
+    public void testLogData_DatabaseClientError() {
 
+        reset(routingContext, dataBaseClient, httpServerResponse);
+
+        // Create request body
+        JsonObject jsonBody = new JsonObject();
+        jsonBody.put("sensorId", "123");
+        jsonBody.put("temperature", "9");
+        jsonBody.put("humidity", "87");
+
+        // Query has json body and path parameter
+        RequestParameters requestParameters = createRequestBody(jsonBody);
+
+        // Set up routing context
+        expect(routingContext.get(anyString())).andReturn(requestParameters);
+        // Set up database client to return an error
+        expect(dataBaseClient.insertData(anyObject())).andReturn(Single.error(new Exception("Error!")));
+
+        // Set up the Internal Server Error response
+        expect(routingContext.response()).andReturn(httpServerResponse);
+        expect(httpServerResponse.setStatusCode(500)).andReturn(httpServerResponse);
+        expect(httpServerResponse.setStatusMessage("Internal Server Error")).andReturn(httpServerResponse);
+        expect(httpServerResponse.end()).andReturn(null);
+
+        replay(routingContext, dataBaseClient, httpServerResponse);
+
+        sensorApiImpl.logData(routingContext);
+
+        verify(routingContext, dataBaseClient, httpServerResponse);
     }
 
     @Test
-    public void testLogData_noParams() {
-
-    }
-
-    @Test
-    public void getDataForDate_validParams() {
+    public void getDataForDate_Success() {
 
         setup();
 
@@ -106,7 +130,7 @@ public class TestSensorApiImpl {
     }
 
     @Test
-    public void getDataForDate_invalidParams() {
+    public void getDataForDate_DatabaseClientError() {
 
         setup();
 
@@ -126,82 +150,42 @@ public class TestSensorApiImpl {
     }
 
     @Test
-    public void getDataForDate_noParams() {
-
-        setup();
-
-        // Create request body
-        JsonObject jsonBody = new JsonObject();
-        jsonBody.put("year", "2023");
-        jsonBody.put("month", "12");
-        jsonBody.put("date", "17");
-
-        // Create path parameter
-        Map<String, RequestParameter> pathParameter = createPathParameter("sensorId", "123");
-
-        // Query has json body and path parameter
-        RequestParameters requestParameters = createBodyAndPathParameters(jsonBody, pathParameter);
-
+    public void getDataForDateRange_Success() {
 
     }
 
     @Test
-    public void getDataForDateRange_validParams() {
+    public void getDataForDateRange_DatabaseClientError() {
 
     }
 
     @Test
-    public void getDataForDateRange_invalidParams() {
+    public void createSensor_Success() {
 
     }
 
     @Test
-    public void getDataForDateRange_noParams() {
+    public void createSensor_DatabaseClientError() {
 
     }
 
     @Test
-    public void createSensor_validParams() {
+    public void listSensors_Success() {
 
     }
 
     @Test
-    public void createSensor_invalidParams() {
+    public void listSensors_DatabaseClientError() {
 
     }
 
     @Test
-    public void createSensor_noParams() {
+    public void getSensor_Success() {
 
     }
 
     @Test
-    public void listSensors_validParams() {
-
-    }
-
-    @Test
-    public void listSensors_invalidParams() {
-
-    }
-
-    @Test
-    public void listSensors_noParams() {
-
-    }
-
-    @Test
-    public void getSensor_validParams() {
-
-    }
-
-    @Test
-    public void getSensor_invalidParams() {
-
-    }
-
-    @Test
-    public void getSensor_noParams() {
+    public void getSensor_DatabaseClientError() {
 
     }
 

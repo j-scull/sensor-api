@@ -13,7 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import projects.sensor.api.Main;
 
-public class SQLiteClient implements DataBaseClient {
+public class SQLiteClient implements DatabaseClient {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
 
