@@ -53,9 +53,8 @@ public class OpenApiRouter extends AbstractVerticle {
 //                                    APIKeyHandler.create(authProvider)
 //                                            .header(config.getString("name")));
 
-                    RouterBuilderOptions options = new RouterBuilderOptions();
-                    options.setOperationModelKey("operationModel");
-                    routerBuilder.setOptions(options);
+                    routerBuilder.setOptions(new RouterBuilderOptions()
+                            .setOperationModelKey("operationModel"));
 
                     // Add handlers to the operations defined in the spec.
                     addHandler(routerBuilder, "logData", sensorApiImpl::logData);
