@@ -21,9 +21,9 @@ public class SqliteUtil {
     public static void createTables(String url) {
 
         // Sensor table
-        // id - string (UUID) (PRIMARY KEY)
-        // location - string
-        // creationTime - timestamp
+        // sensorId     - string (UUID)
+        // location     - string
+        // creationTime - timestamp, added by service on insert
         String sensorTableQuery = "CREATE TABLE IF NOT EXISTS sensor_info (\n"
                 + "	sensorId VARCHAR(36) NOT NULL PRIMARY KEY,\n"
                 + "	location VARCHAR(36) NOT NULL,\n"
@@ -31,11 +31,12 @@ public class SqliteUtil {
                 + ");";
 
         // Data table
-        // id - string (UUID) (PRIMARY KEY)
-        // time - timestamp (PRIMARY KEY)
+        // sensorId    - string (UUID)
         // temperature - int
-        // humidity - int
+        // humidity    - int
+        // time        - timestamp, added by service at time of insert
         String dataTableQuery = "CREATE TABLE IF NOT EXISTS temperature_and_humidity (\n"
+//                + " rowId INTEGER PRIMARY KEY AUTOINCREMENT,\n"
                 + "	sensorId VARCHAR(36) NOT NULL,\n"
                 + "	temperature int NOT NULL,\n"
                 + "	humidity int NOT NULL,\n"

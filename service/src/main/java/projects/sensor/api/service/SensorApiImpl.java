@@ -18,6 +18,7 @@ import projects.sensor.api.util.TimeUtil;
 
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
+import java.util.TimeZone;
 
 import static projects.sensor.api.util.ResponseUtil.*;
 
@@ -29,6 +30,9 @@ public class SensorApiImpl implements SensorApi {
     DatabaseClient databaseClient;
 
     private final Logger LOGGER = LoggerFactory.getLogger(Main.class);
+
+    private final String DATE_TIME_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
+    private final String TIME_ZONE = "UTC";
 
     public SensorApiImpl(DatabaseClient databaseClient) {
         this.databaseClient = databaseClient;
@@ -46,7 +50,9 @@ public class SensorApiImpl implements SensorApi {
 
         // Add a timestamp to logged with the data
         Timestamp timestamp = new java.sql.Timestamp(System.currentTimeMillis());
-        String dateTimeString = new SimpleDateFormat("y-MM-dd HH:mm:ss.SSS").format(timestamp);
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat(DATE_TIME_FORMAT);
+        simpleDateFormat.setTimeZone(TimeZone.getTimeZone(TIME_ZONE));
+        String dateTimeString = simpleDateFormat.format(timestamp);
         LOGGER.info("logData - request = {}, time = {}", updateRequest, dateTimeString);  // Todo - change log level to debug
 
         // Extract queryParams and pass to database client

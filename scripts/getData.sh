@@ -8,4 +8,4 @@ MONTH=01
 DATE=7
 HOUR=22
 
-curl -v -X POST "$URL/data/$SENSOR_ID/date" -d '{"year": "2024", "month":"01", "date":"13"}' -H 'accept: application/json' -H 'Content-Type: application/json' | jq
+curl -v -X POST "$URL/data/$SENSOR_ID/date" -d '{"year": "2024", "month":"01", "date":"18"}' -H 'accept: application/json' -H 'Content-Type: application/json' | jq
