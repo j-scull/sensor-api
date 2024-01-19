@@ -3,7 +3,10 @@ package projects.sensor.api.util;
 import io.vertx.core.json.JsonObject;
 
 import java.text.SimpleDateFormat;
+import java.time.OffsetDateTime;
 import java.util.Calendar;
+
+import static java.time.temporal.ChronoUnit.DAYS;
 
 public class TimeUtil {
 
@@ -89,5 +92,14 @@ public class TimeUtil {
         calendar.add(Calendar.HOUR_OF_DAY, n);
         return new SimpleDateFormat("y-MM-dd HH").format(calendar.getTime());
     }
+
+    public static String getDateWithoutHours(OffsetDateTime dateTime) {
+        return dateTime.truncatedTo(DAYS).toString();
+    }
+
+    public static String getNextDate(OffsetDateTime dateTime) {
+        return dateTime.truncatedTo(DAYS).plusDays(1l).toString();
+    }
+
     
 }

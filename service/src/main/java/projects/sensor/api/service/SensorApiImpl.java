@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import projects.sensor.api.Main;
 import projects.sensor.api.database.DatabaseClient;
+import projects.sensor.model.GetDataForDateRequest;
 import projects.sensor.model.UpdateRequest;
 import projects.sensor.api.util.TimeUtil;
 
@@ -70,16 +71,13 @@ public class SensorApiImpl implements SensorApi {
         RequestParameters params = routingContext.get(ValidationHandler.REQUEST_CONTEXT_KEY);
         RequestParameter sensorId = params.pathParameter("sensorId");
         RequestParameter body = params.body();
-        JsonObject jsonRequest = body.getJsonObject();
-        LOGGER.info("getDataForDate - sensorId = {}, jsonRequest = {}", sensorId, jsonRequest.encodePrettily());
-
-        // ToDo - validate the parameters - read into generated model class
+        GetDataForDateRequest getDataForDateRequest = body != null ? DatabindCodec.mapper().convertValue(body.get(), new TypeReference<GetDataForDateRequest>(){}) : null;
+        LOGGER.info("getDataForDate - sensorId = {}, jsonRequest = {}", sensorId, getDataForDateRequest);
 
         // If selecting entries for 2023-11-28, a "from" and "until" range is created
         // from = '2023-11-28 00:00:00' and "until" '2023-11-29 00:00:00'
-        String from = TimeUtil.getDateTimeString(jsonRequest);
-        // Add one calendar date, or hour if not null
-        String until = TimeUtil.getDateTimeStringNextInterval(jsonRequest);
+        String from = TimeUtil.getDateWithoutHours(getDataForDateRequest.getDateTime());
+        String until = TimeUtil.getNextDate(getDataForDateRequest.getDateTime());
 
         JsonArray queryParams = new JsonArray();
         queryParams.add(from);
