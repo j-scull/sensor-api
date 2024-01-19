@@ -82,7 +82,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/QueryDateTime'
+              type: object
+              properties:
+                dateTime:
+                  type: string
+                  format: date-time
+              required:
+                - dateTime
       responses:
         200:
           description: An array of data logged by a sensor.
@@ -121,9 +127,14 @@ paths:
               type: object
               properties:
                 from:
-                  $ref: '#/components/schemas/QueryDateTime'
+                  type: string
+                  format: date-time
                 until:
-                  $ref: '#/components/schemas/QueryDateTime'
+                  type: string
+                  format: date-time
+              required:
+                - from
+                - until
       responses:
         200:
           description: An array of data logged by a sensor.
@@ -324,21 +335,6 @@ components:
           format: int32
           minimum: 0
           maximum: 100
-    QueryDateTime:
-      type: object
-      properties:
-        year:
-          type: string
-        month:
-          type: string
-        date:
-          type: string
-        hour:
-          type: string
-      required:
-        - year
-        - month
-        - date
     GetDataResponse:
       type: object
       required:
@@ -373,6 +369,7 @@ components:
           type: string
         startDate:
           type: string
+          format: date-time
     ListSensorsResponse:
       type: array
       items:
