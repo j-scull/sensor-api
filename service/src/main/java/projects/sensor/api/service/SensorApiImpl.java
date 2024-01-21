@@ -1,6 +1,9 @@
 package projects.sensor.api.service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.json.jackson.DatabindCodec;
@@ -30,6 +33,8 @@ public class SensorApiImpl implements SensorApi {
 
     DatabaseClient databaseClient;
 
+    ObjectMapper mapper;
+
     private final Logger LOGGER = LoggerFactory.getLogger(Main.class);
 
     private final String DATE_TIME_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
@@ -37,6 +42,10 @@ public class SensorApiImpl implements SensorApi {
 
     public SensorApiImpl(DatabaseClient databaseClient) {
         this.databaseClient = databaseClient;
+        // Todo - extract to util class
+        this.mapper = DatabindCodec.mapper();
+        this.mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        this.mapper.registerModule(new JavaTimeModule());
     }
 
     // Todo - write unit tests
@@ -47,7 +56,7 @@ public class SensorApiImpl implements SensorApi {
         // Parse the request, vertx will validate requests against the api specification
         RequestParameters params = routingContext.get(ValidationHandler.REQUEST_CONTEXT_KEY);
         RequestParameter body = params.body();
-        UpdateRequest updateRequest = body != null ? DatabindCodec.mapper().convertValue(body.get(), new TypeReference<UpdateRequest>(){}) : null;
+        UpdateRequest updateRequest = body != null ? mapper.convertValue(body.get(), new TypeReference<UpdateRequest>(){}) : null;
 
         // Add a timestamp to logged with the data
         Timestamp timestamp = new java.sql.Timestamp(System.currentTimeMillis());
@@ -71,7 +80,9 @@ public class SensorApiImpl implements SensorApi {
         RequestParameters params = routingContext.get(ValidationHandler.REQUEST_CONTEXT_KEY);
         RequestParameter sensorId = params.pathParameter("sensorId");
         RequestParameter body = params.body();
-        GetDataForDateRequest getDataForDateRequest = body != null ? DatabindCodec.mapper().convertValue(body.get(), new TypeReference<GetDataForDateRequest>(){}) : null;
+        LOGGER.info("body = {}", body);
+
+        GetDataForDateRequest getDataForDateRequest = body != null ? mapper.convertValue(body.get(), new TypeReference<GetDataForDateRequest>(){}) : null;
         LOGGER.info("getDataForDate - sensorId = {}, jsonRequest = {}", sensorId, getDataForDateRequest);
 
         // If selecting entries for 2023-11-28, a "from" and "until" range is created

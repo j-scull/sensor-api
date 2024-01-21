@@ -98,7 +98,7 @@ public class TimeUtil {
     }
 
     public static String getNextDate(OffsetDateTime dateTime) {
-        return dateTime.truncatedTo(DAYS).plusDays(1l).toString();
+        return dateTime.truncatedTo(DAYS).plusDays(1L).toString();
     }
 
     
