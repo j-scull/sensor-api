@@ -25,7 +25,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.easymock.EasyMock.*;
+//import static org.easymock.EasyMock.*;
+import static org.easymock.EasyMock.createMock;
+import static org.easymock.EasyMock.anyObject;
+import static org.easymock.EasyMock.anyString;
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.replay;
+import static org.easymock.EasyMock.reset;
+import static org.easymock.EasyMock.verify;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 @RunWith(MockitoJUnitRunner.class)
 public class TestSensorApiImpl {
@@ -115,15 +124,14 @@ public class TestSensorApiImpl {
     @Test
     public void getDataForDate_Success_ReturnsData() {
 
-        setup();
+        reset(routingContext, dataBaseClient, httpServerResponse);
 
-        // Create request body
-        JsonObject jsonBody = new JsonObject();
-        jsonBody.put("dateTime", "2024-01-19T18:29:00.000Z");
-        // Create path parameter
-        Map<String, RequestParameter> pathParameter = createPathParameter("sensorId", "123");
-        // Query has json body and path parameter
-        RequestParameters requestParameters = createBodyAndPathParameters(jsonBody, pathParameter);
+        // Create request parameters
+        Map<String, RequestParameter> pathParameterMap = new HashMap<>();
+        pathParameterMap .put("sensorId", new RequestParameterImpl("123"));
+        Map<String, RequestParameter> queryParameterMap = new HashMap<>();
+        queryParameterMap .put("dateTime", new RequestParameterImpl("2024-01-19T18:29:00.000Z"));
+        RequestParametersImpl requestParameters = createPathAndQueryParameters(pathParameterMap, queryParameterMap);
 
         // Todo - extract to helper method
         // Database query result
@@ -171,15 +179,14 @@ public class TestSensorApiImpl {
     @Test
     public void getDataForDate_Success_ReturnsEmpty() {
 
-        setup();
+        reset(routingContext, dataBaseClient, httpServerResponse);
 
-        // Create request body
-        JsonObject jsonBody = new JsonObject();
-        jsonBody.put("dateTime", "2024-01-19T18:29:00.000Z");
-        // Create path parameter
-        Map<String, RequestParameter> pathParameter = createPathParameter("sensorId", "123");
-        // Query has json body and path parameter
-        RequestParameters requestParameters = createBodyAndPathParameters(jsonBody, pathParameter);
+        // Create request parameters
+        Map<String, RequestParameter> pathParameterMap = new HashMap<>();
+        pathParameterMap .put("sensorId", new RequestParameterImpl("123"));
+        Map<String, RequestParameter> queryParameterMap = new HashMap<>();
+        queryParameterMap .put("dateTime", new RequestParameterImpl("2024-01-19T18:29:00.000Z"));
+        RequestParametersImpl requestParameters = createPathAndQueryParameters(pathParameterMap, queryParameterMap);
 
         // Database query result - empty
         ResultSet resultSet = new ResultSet()
@@ -209,19 +216,19 @@ public class TestSensorApiImpl {
 
     @Test
     public void getDataForDate_DatabaseClientError() {
-        setup();
 
-        // Create request body
-        JsonObject jsonBody = new JsonObject();
-        jsonBody.put("dateTime", "2024-01-19T18:29:00.000Z");
-        // Create path parameter
-        Map<String, RequestParameter> pathParameter = createPathParameter("sensorId", "123");
-        // Query has json body and path parameter
-        RequestParameters requestParameters = createBodyAndPathParameters(jsonBody, pathParameter);
+        reset(routingContext, dataBaseClient, httpServerResponse);
+
+        // Create request parameters
+        Map<String, RequestParameter> pathParameterMap = new HashMap<>();
+        pathParameterMap .put("sensorId", new RequestParameterImpl("123"));
+        Map<String, RequestParameter> queryParameterMap = new HashMap<>();
+        queryParameterMap .put("dateTime", new RequestParameterImpl("2024-01-19T18:29:00.000Z"));
+        RequestParametersImpl requestParameters = createPathAndQueryParameters(pathParameterMap, queryParameterMap);
 
         // Set up routing context
         expect(routingContext.get(anyString())).andReturn(requestParameters);
-        // Set up database client to return successful empty response
+        // Set up database connection to fail
         expect(dataBaseClient.selectData(anyObject())).andReturn(Single.error(new Exception("Error!")));
 
         // Set up the Internal Server Error response
@@ -240,11 +247,169 @@ public class TestSensorApiImpl {
     @Test
     public void getDataForDateRange_Success() {
 
+        reset(routingContext, dataBaseClient, httpServerResponse);
+
+        // Create request paramaters
+        Map<String, RequestParameter> pathParameterMap = new HashMap<>();
+        pathParameterMap .put("sensorId", new RequestParameterImpl("123"));
+        Map<String, RequestParameter> queryParameterMap = new HashMap<>();
+        queryParameterMap.put("from", new RequestParameterImpl("2024-01-23T19:00:00.000Z"));
+        queryParameterMap.put("until", new RequestParameterImpl("2024-01-23T20:00:00.000Z"));
+        RequestParametersImpl requestParameters = createPathAndQueryParameters(pathParameterMap, queryParameterMap);
+
+        // Todo - extract to helper method
+        // Database query result
+        JsonArray results = new JsonArray()
+                .add("123")
+                .add(12)
+                .add(80)
+                .add("2024-01-23T19:30:00.000Z");
+        List<JsonArray> resultsList = new ArrayList<>();
+        resultsList.add(results);
+        ResultSet resultSet = new ResultSet()
+                .setColumnNames(Arrays.asList("sensorId", "temperature", "humidity", "time"))
+                .setResults(resultsList);
+
+        // Todo - extract to helper method
+        // Response data
+        JsonObject responseData = new JsonObject()
+                .put("sensorId", "123")
+                .put("temperature", 12)
+                .put("humidity", 80)
+                .put("time", "2024-01-23T19:30:00.000Z");
+        List<JsonObject> responseList = new ArrayList<>();
+        responseList.add(responseData);
+        JsonObject response = new JsonObject()
+                .put("data", responseList);
+
+        // Set up routing context
+        expect(routingContext.get(anyString())).andReturn(requestParameters);
+        // Set up database client to return successful response with data
+        expect(dataBaseClient.selectData(anyObject())).andReturn(Single.just(resultSet));
+        // Set up the Created response
+        expect(routingContext.response()).andReturn(httpServerResponse);
+        expect(httpServerResponse.setStatusCode(200)).andReturn(httpServerResponse);
+        expect(httpServerResponse.setStatusMessage("OK")).andReturn(httpServerResponse);
+        expect(httpServerResponse.end(response.toBuffer())).andReturn(null);
+
+        replay(routingContext, dataBaseClient, httpServerResponse);
+
+        sensorApiImpl.getDataForDateRange(routingContext);
+
+        verify(routingContext, dataBaseClient, httpServerResponse);
+    }
+
+    @Test
+    public void getDataForDateRange_Success_EmptyResponse() {
+
+        reset(routingContext, dataBaseClient, httpServerResponse);
+
+        // Create request paramaters
+        Map<String, RequestParameter> pathParameterMap = new HashMap<>();
+        pathParameterMap .put("sensorId", new RequestParameterImpl("123"));
+        Map<String, RequestParameter> queryParameterMap = new HashMap<>();
+        queryParameterMap.put("from", new RequestParameterImpl("2024-01-23T19:00:00.000Z"));
+        queryParameterMap.put("until", new RequestParameterImpl("2024-01-23T20:00:00.000Z"));
+        RequestParametersImpl requestParameters = createPathAndQueryParameters(pathParameterMap, queryParameterMap);
+
+        // Todo - extract to helper method
+        // Database query result - empty
+        List<JsonArray> resultsList = new ArrayList<>();
+        ResultSet resultSet = new ResultSet()
+                .setColumnNames(Arrays.asList("sensorId", "temperature", "humidity", "time"))
+                .setResults(resultsList);
+
+        // Todo - extract to helper method
+        // Response data - empty
+        JsonObject response = new JsonObject()
+                .put("data", new ArrayList<>());
+
+        // Set up routing context
+        expect(routingContext.get(anyString())).andReturn(requestParameters);
+        // Set up database client to return successful but empty
+        expect(dataBaseClient.selectData(anyObject())).andReturn(Single.just(resultSet));
+        // Set up the Created response
+        expect(routingContext.response()).andReturn(httpServerResponse);
+        expect(httpServerResponse.setStatusCode(200)).andReturn(httpServerResponse);
+        expect(httpServerResponse.setStatusMessage("OK")).andReturn(httpServerResponse);
+        expect(httpServerResponse.end(response.toBuffer())).andReturn(null);
+
+        replay(routingContext, dataBaseClient, httpServerResponse);
+
+        sensorApiImpl.getDataForDateRange(routingContext);
+
+        verify(routingContext, dataBaseClient, httpServerResponse);
     }
 
     @Test
     public void getDataForDateRange_DatabaseClientError() {
 
+        reset(routingContext, dataBaseClient, httpServerResponse);
+
+        // Create request paramaters
+        Map<String, RequestParameter> pathParameterMap = new HashMap<>();
+        pathParameterMap .put("sensorId", new RequestParameterImpl("123"));
+        Map<String, RequestParameter> queryParameterMap = new HashMap<>();
+        queryParameterMap.put("from", new RequestParameterImpl("2024-01-23T19:00:00.000Z"));
+        queryParameterMap.put("until", new RequestParameterImpl("2024-01-23T20:00:00.000Z"));
+        RequestParametersImpl requestParameters = createPathAndQueryParameters(pathParameterMap, queryParameterMap);
+
+
+        // Todo - extract to helper method
+        // Database query result - empty
+        List<JsonArray> resultsList = new ArrayList<>();
+        ResultSet resultSet = new ResultSet()
+                .setColumnNames(Arrays.asList("sensorId", "temperature", "humidity", "time"))
+                .setResults(resultsList);
+
+        // Todo - extract to helper method
+        // Response data
+        JsonObject response = new JsonObject()
+                .put("data", new ArrayList<>());
+
+        // Set up routing context
+        expect(routingContext.get(anyString())).andReturn(requestParameters);
+        // Set up database connection to fail
+        expect(dataBaseClient.selectData(anyObject())).andReturn(Single.error(new Exception("Error!")));
+        // Set up the Internal Server Error response
+        expect(routingContext.response()).andReturn(httpServerResponse);
+        expect(httpServerResponse.setStatusCode(500)).andReturn(httpServerResponse);
+        expect(httpServerResponse.setStatusMessage("Internal Server Error")).andReturn(httpServerResponse);
+        expect(httpServerResponse.end()).andReturn(null);
+
+        replay(routingContext, dataBaseClient, httpServerResponse);
+
+        sensorApiImpl.getDataForDateRange(routingContext);
+
+        verify(routingContext, dataBaseClient, httpServerResponse);
+    }
+
+    @Test
+    public void getDataForDateRange_InvalidTimeParameters() {
+
+        reset(routingContext, dataBaseClient, httpServerResponse);
+
+        // Create request paramaters - invalid as 'from' is after 'until'
+        Map<String, RequestParameter> pathParameterMap = new HashMap<>();
+        pathParameterMap .put("sensorId", new RequestParameterImpl("123"));
+        Map<String, RequestParameter> queryParameterMap = new HashMap<>();
+        queryParameterMap.put("from", new RequestParameterImpl("2024-01-23T20:00:00.000Z"));
+        queryParameterMap.put("until", new RequestParameterImpl("2024-01-23T19:00:00.000Z"));
+        RequestParametersImpl requestParameters = createPathAndQueryParameters(pathParameterMap, queryParameterMap);
+
+        // Set up routing context
+        expect(routingContext.get(anyString())).andReturn(requestParameters);
+
+        replay(routingContext, dataBaseClient, httpServerResponse);
+
+        // Expect that an expection is thrown
+        try {
+            sensorApiImpl.getDataForDateRange(routingContext);
+        } catch (Exception e) {
+            assertTrue(e instanceof IllegalArgumentException);
+            assertEquals(e.getMessage(), "Invalid request parameters: \'from\' must specify a time before 'until'");
+        }
+        verify(routingContext, dataBaseClient, httpServerResponse);
     }
 
     @Test
@@ -289,25 +454,17 @@ public class TestSensorApiImpl {
         return requestParameters;
     }
 
+    private RequestParametersImpl createPathAndQueryParameters(Map<String, RequestParameter> pathParameters, Map<String, RequestParameter> queryParameters) {
+        RequestParametersImpl requestParameters = new RequestParametersImpl();
+        requestParameters.setPathParameters(pathParameters);
+        requestParameters.setQueryParameters(queryParameters);
+        return requestParameters;
+    }
+
     private RequestParameters createRequestBody(JsonObject jsonObject) {
         RequestParameterImpl requestParameter = new RequestParameterImpl(jsonObject);
         RequestParametersImpl requestParameters = new RequestParametersImpl();
         requestParameters.setBody(requestParameter);
         return requestParameters;
-    }
-
-    private RequestParameters createBodyAndPathParameters(JsonObject jsonObject, Map<String, RequestParameter> pathParameters) {
-        RequestParametersImpl requestParameters = new RequestParametersImpl();
-        RequestParameterImpl requestParameter = new RequestParameterImpl(jsonObject);
-        requestParameters.setBody(requestParameter);
-        requestParameters.setPathParameters(pathParameters);
-        return requestParameters;
-    }
-
-    private Map<String, RequestParameter> createPathParameter(String parameterName, String value) {
-        Map<String, RequestParameter> parameterMap = new HashMap<>();
-        RequestParameterImpl requestParameter = new RequestParameterImpl(value);
-        parameterMap.put(parameterName, requestParameter);
-        return parameterMap;
     }
 }

@@ -16,12 +16,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import projects.sensor.api.Main;
 import projects.sensor.api.database.DatabaseClient;
-import projects.sensor.model.GetDataForDateRequest;
 import projects.sensor.model.UpdateRequest;
 import projects.sensor.api.util.TimeUtil;
 
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
+import java.time.OffsetDateTime;
 import java.util.TimeZone;
 
 import static projects.sensor.api.util.ResponseUtil.*;
@@ -39,6 +39,11 @@ public class SensorApiImpl implements SensorApi {
 
     private final String DATE_TIME_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
     private final String TIME_ZONE = "UTC";
+
+    private static final String SENSOR_ID = "sensorId";
+    private static final String DATE_TIME = "dateTime";
+    private static final String FROM = "from";
+    private static final String UNTIL = "until";
 
     public SensorApiImpl(DatabaseClient databaseClient) {
         this.databaseClient = databaseClient;
@@ -78,17 +83,15 @@ public class SensorApiImpl implements SensorApi {
     @Override
     public void getDataForDate(RoutingContext routingContext) {
         RequestParameters params = routingContext.get(ValidationHandler.REQUEST_CONTEXT_KEY);
-        RequestParameter sensorId = params.pathParameter("sensorId");
-        RequestParameter body = params.body();
-        LOGGER.info("body = {}", body);
+        RequestParameter sensorId = params.pathParameter(SENSOR_ID);
+        OffsetDateTime dateTime = OffsetDateTime.parse(params.queryParameter(DATE_TIME).getString());
 
-        GetDataForDateRequest getDataForDateRequest = body != null ? mapper.convertValue(body.get(), new TypeReference<GetDataForDateRequest>(){}) : null;
-        LOGGER.info("getDataForDate - sensorId = {}, jsonRequest = {}", sensorId, getDataForDateRequest);
+        LOGGER.info("getDataForDate - sensorId = {}, dateTime = {}", sensorId, dateTime);
 
-        // If selecting entries for 2023-11-28, a "from" and "until" range is created
-        // from = '2023-11-28 00:00:00' and "until" '2023-11-29 00:00:00'
-        String from = TimeUtil.getDateWithoutHours(getDataForDateRequest.getDateTime());
-        String until = TimeUtil.getNextDate(getDataForDateRequest.getDateTime());
+        // If selecting entries for any time on date 2023-11-28, a "from" and "until" range is created
+        // from = '2023-11-28T00:00:00.000Z' and until = '2023-11-29T00:00:00.000Z'
+        String from = TimeUtil.getDateWithoutHours(dateTime);
+        String until = TimeUtil.getNextDate(dateTime);
 
         JsonArray queryParams = new JsonArray();
         queryParams.add(from);
@@ -103,26 +106,29 @@ public class SensorApiImpl implements SensorApi {
 
     @Override
     public void getDataForDateRange(RoutingContext routingContext) {
-        // Todo - validate these parameters
         RequestParameters params = routingContext.get(ValidationHandler.REQUEST_CONTEXT_KEY);
-        RequestParameter sensorId = params.pathParameter("sensorId");
-        RequestParameter body = params.body();
-        JsonObject jsonRequest = body.getJsonObject();
-        LOGGER.info("getDataForDateRange - sensorId = {}, jsonRequest = {}", sensorId, jsonRequest.encodePrettily());
+        RequestParameter sensorId = params.pathParameter(SENSOR_ID);
+        OffsetDateTime from = OffsetDateTime.parse(params.queryParameter(FROM).getString());
+        OffsetDateTime until = OffsetDateTime.parse(params.queryParameter(UNTIL).getString());
 
-        String from = TimeUtil.getDateTimeString(jsonRequest.getJsonObject("from"));
-        // The range is inclusive of the specified untilDate/untilHour
-        String until = TimeUtil.getDateTimeStringNextInterval(jsonRequest.getJsonObject("until"));
+        LOGGER.info("getDataForDateRange - sensorId = {}, from = {}, until = {}", sensorId, from, until);
 
-        JsonArray queryParams = new JsonArray();
-        queryParams.add(from);
-        queryParams.add(until);
+        if (!from.isBefore(until)) {
+            LOGGER.error("getDataForDateRange - logically invalid times: \'from\' does not specify a time before 'until'");
+            // Exception is caught by the failure handler and returns a 400 response
+            // Todo - review if an explicit handler can be added for this
+            throw new IllegalArgumentException("Invalid request parameters: \'from\' must specify a time before 'until'");
+        } else {
 
-        this.databaseClient.selectData(queryParams).subscribe(resultSet -> {
-            JsonObject jsonResponse = new JsonObject().put("data", resultSet.getRows());
-            LOGGER.info("getDataForDateRange - result = {}", jsonResponse.encodePrettily());
-            okResponse(routingContext, jsonResponse);
-        }, e -> internalServerError(routingContext));
+            JsonArray queryParams = new JsonArray();
+            queryParams.add(from);
+            queryParams.add(until);
+            this.databaseClient.selectData(queryParams).subscribe(resultSet -> {
+                JsonObject jsonResponse = new JsonObject().put("data", resultSet.getRows());
+                LOGGER.info("getDataForDateRange - result = {}", jsonResponse.encodePrettily());
+                okResponse(routingContext, jsonResponse);
+            }, e -> internalServerError(routingContext));
+        }
     }
 
     @Override

@@ -62,7 +62,7 @@ paths:
 #                $ref: "#/components/schemas/Error"
 
   /data/{sensorId}/date:
-    post:
+    get:
       summary: Get all logged data for a specified sensorId and date.
       operationId: getDataForDate
 #      security:
@@ -72,30 +72,25 @@ paths:
       parameters:
         - name: sensorId
           in: path
-          description: Get data logged by this sensor.
           required: true
           schema:
             type: string
-      requestBody:
-        description: Request body specifying a date/time
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                dateTime:
-                  type: string
-                  format: date-time
-              required:
-                - dateTime
+          description: Get data logged by this sensor.
+        - name: dateTime
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+          description: Get data logged for this date-time.
+
       responses:
         200:
           description: An array of data logged by a sensor.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/GetDataResponseArray"
+                $ref: "#/components/schemas/DataResponseArray"
         default:
           description: Unexpected error.
           content:
@@ -103,8 +98,8 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
     
-  /data/{sensorId}/date/range:
-    post:
+  /data/{sensorId}/range:
+    get:
       summary: Get all logged data for a specified sensorId within a specified time range.
       operationId: getDataForDateRange
 #      security:
@@ -114,34 +109,31 @@ paths:
       parameters:
         - name: sensorId
           in: path
-          description: Get data logged by this sensor.
           required: true
           schema:
             type: string
-      requestBody:
-        description: Request body specifying a from -> until date/time range
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                from:
-                  type: string
-                  format: date-time
-                until:
-                  type: string
-                  format: date-time
-              required:
-                - from
-                - until
+          description: Get data logged by this sensor.
+        - name: from
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+          description: Get data logged from this date-time.
+        - name: until
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+          description: Get data logged until this date-time.
       responses:
         200:
           description: An array of data logged by a sensor.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/GetDataResponseArray"
+                $ref: "#/components/schemas/DataResponseArray"
         default:
           description: Unexpected error.
           content:
@@ -195,7 +187,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ListSensorsResponse"
+                $ref: "#/components/schemas/SensorsResponseList"
         default:
           description: Unexpected error.
           content:
@@ -250,7 +242,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/GetSensorResponse"
+                $ref: "#/components/schemas/SensorResponse"
         default:
           description: Unexpected error.
           content:
@@ -335,7 +327,7 @@ components:
           format: int32
           minimum: 0
           maximum: 100
-    GetDataResponse:
+    DataResponse:
       type: object
       required:
         - temperature
@@ -352,11 +344,11 @@ components:
           maximum: 100
         dateTime:
           type: string
-    GetDataResponseArray:
+    DataResponseArray:
       type: array
       items:
-        $ref: "#/components/schemas/GetDataResponse"
-    GetSensorResponse:
+        $ref: "#/components/schemas/DataResponse"
+    SensorResponse:
       type: object
       required:
         - sensorId
@@ -370,10 +362,10 @@ components:
         startDate:
           type: string
           format: date-time
-    ListSensorsResponse:
+    SensorsResponseList:
       type: array
       items:
-        $ref: '#/components/schemas/GetSensorResponse'
+        $ref: '#/components/schemas/SensorResponse'
     CreateSensorRequest:
       type: object
       required:
