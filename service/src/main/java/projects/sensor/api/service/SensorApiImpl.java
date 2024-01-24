@@ -115,9 +115,8 @@ public class SensorApiImpl implements SensorApi {
 
         if (!from.isBefore(until)) {
             LOGGER.error("getDataForDateRange - logically invalid times: \'from\' does not specify a time before 'until'");
-            // Exception is caught by the failure handler and returns a 400 response
-            // Todo - review if an explicit handler can be added for this
-            throw new IllegalArgumentException("Invalid request parameters: \'from\' must specify a time before 'until'");
+            // The failure handler will return a 400 response
+            routingContext.fail(new IllegalArgumentException("Invalid request parameters: \'from\' must specify a time before 'until'"));
         } else {
 
             JsonArray queryParams = new JsonArray();

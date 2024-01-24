@@ -12,11 +12,12 @@ import io.vertx.ext.web.validation.RequestParameter;
 import io.vertx.ext.web.validation.RequestParameters;
 import io.vertx.ext.web.validation.impl.RequestParameterImpl;
 import io.vertx.ext.web.validation.impl.RequestParametersImpl;
+import org.easymock.EasyMockRunner;
+import org.easymock.Mock;
 import org.easymock.TestSubject;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
 import projects.sensor.api.database.DatabaseClient;
 
 import java.util.ArrayList;
@@ -25,40 +26,28 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-//import static org.easymock.EasyMock.*;
 import static org.easymock.EasyMock.createMock;
 import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.anyString;
 import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.expectLastCall;
+import static org.easymock.EasyMock.isA;
 import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.reset;
 import static org.easymock.EasyMock.verify;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
-@RunWith(MockitoJUnitRunner.class)
+@RunWith(EasyMockRunner.class)
 public class TestSensorApiImpl {
 
-
-    @TestSubject
-    private SensorApiImpl sensorApiImpl;
-//    @TestSubject
+    @Mock
     private DatabaseClient dataBaseClient;
-
-    // Mocks
+    @Mock
     private RoutingContext routingContext;
+    @Mock
     private HttpServerResponse httpServerResponse;
 
-    @Before
-    public void setup() {
-
-        // Set up mocks
-        dataBaseClient = createMock(DatabaseClient.class);
-        routingContext = createMock(RoutingContext.class);
-        httpServerResponse = createMock(HttpServerResponse.class);
-
-        sensorApiImpl = new SensorApiImpl(dataBaseClient);
-    }
+    @TestSubject
+    private SensorApiImpl sensorApiImpl = new SensorApiImpl(dataBaseClient);
 
     @Test
     public void testLogData_Success() {
@@ -399,16 +388,12 @@ public class TestSensorApiImpl {
 
         // Set up routing context
         expect(routingContext.get(anyString())).andReturn(requestParameters);
-
+        routingContext.fail(isA(IllegalArgumentException.class));
+        expectLastCall();
         replay(routingContext, dataBaseClient, httpServerResponse);
 
-        // Expect that an expection is thrown
-        try {
-            sensorApiImpl.getDataForDateRange(routingContext);
-        } catch (Exception e) {
-            assertTrue(e instanceof IllegalArgumentException);
-            assertEquals(e.getMessage(), "Invalid request parameters: \'from\' must specify a time before 'until'");
-        }
+        sensorApiImpl.getDataForDateRange(routingContext);
+
         verify(routingContext, dataBaseClient, httpServerResponse);
     }
 
