@@ -400,42 +400,284 @@ public class TestSensorApiImpl {
     @Test
     public void createSensor_Success() {
 
+        reset(routingContext, dataBaseClient, httpServerResponse);
+
+        // Create request body
+        JsonObject jsonBody = new JsonObject();
+        jsonBody.put("sensorId", "123");
+        jsonBody.put("location", "soemwhere");
+
+        // Query has json body and path parameter
+        RequestParameters requestParameters = createRequestBody(jsonBody);
+
+        // Set up routing context
+        expect(routingContext.get(anyString())).andReturn(requestParameters);
+        // Set up database client to return successful empty response
+        expect(dataBaseClient.insertSensor(anyObject())).andReturn(Single.just(new UpdateResult(1, new JsonArray())));
+        // Set up the Created response
+        expect(routingContext.response()).andReturn(httpServerResponse);
+        expect(httpServerResponse.setStatusCode(201)).andReturn(httpServerResponse);
+        expect(httpServerResponse.setStatusMessage("OK")).andReturn(httpServerResponse);
+        expect(httpServerResponse.end()).andReturn(null);
+
+        replay(routingContext, dataBaseClient, httpServerResponse);
+
+        sensorApiImpl.createSensor(routingContext);
+
+        verify(routingContext, dataBaseClient, httpServerResponse);
     }
+
 
     @Test
     public void createSensor_DatabaseClientError() {
 
+        reset(routingContext, dataBaseClient, httpServerResponse);
+
+        // Create request body
+        JsonObject jsonBody = new JsonObject();
+        jsonBody.put("sensorId", "123");
+        jsonBody.put("location", "soemwhere");
+
+        // Query has json body and path parameter
+        RequestParameters requestParameters = createRequestBody(jsonBody);
+
+        // Set up routing context
+        expect(routingContext.get(anyString())).andReturn(requestParameters);
+        // Set up database client to return successful empty response
+        expect(dataBaseClient.insertSensor(anyObject())).andReturn(Single.error(new Exception("Error!")));
+        // Set up the Created response
+        expect(routingContext.response()).andReturn(httpServerResponse);
+        expect(httpServerResponse.setStatusCode(500)).andReturn(httpServerResponse);
+        expect(httpServerResponse.setStatusMessage("Internal Server Error")).andReturn(httpServerResponse);
+        expect(httpServerResponse.end()).andReturn(null);
+
+        replay(routingContext, dataBaseClient, httpServerResponse);
+
+        sensorApiImpl.createSensor(routingContext);
+
+        verify(routingContext, dataBaseClient, httpServerResponse);
     }
 
     @Test
     public void listSensors_Success() {
 
+        reset(routingContext, dataBaseClient, httpServerResponse);
+
+        // Database query result
+        JsonArray results = new JsonArray()
+                .add("123")
+                .add("somewhere")
+                .add("2024-01-24T21:00:00.000Z");
+        List<JsonArray> resultsList = new ArrayList<>();
+        resultsList.add(results);
+        ResultSet resultSet = new ResultSet()
+                .setColumnNames(Arrays.asList("sensorId", "location", "creationTime"))
+                .setResults(resultsList);
+
+        // Response data
+        JsonObject responseData = new JsonObject()
+                .put("sensorId", "123")
+                .put("location", "somewhere")
+                .put("creationTime", "2024-01-24T21:00:00.000Z");
+        List<JsonObject> responseList = new ArrayList<>();
+        responseList.add(responseData);
+        JsonObject response = new JsonObject()
+                .put("data", responseList);
+
+        // Set up database client to return successful response with data
+        expect(dataBaseClient.selectAllSensors()).andReturn(Single.just(resultSet));
+        // Set up the Created response
+        expect(routingContext.response()).andReturn(httpServerResponse);
+        expect(httpServerResponse.setStatusCode(200)).andReturn(httpServerResponse);
+        expect(httpServerResponse.setStatusMessage("OK")).andReturn(httpServerResponse);
+        expect(httpServerResponse.end(response.toBuffer())).andReturn(null);
+
+        replay(routingContext, dataBaseClient, httpServerResponse);
+
+        sensorApiImpl.listSensors(routingContext);
+
+        verify(routingContext, dataBaseClient, httpServerResponse);
+    }
+
+    @Test
+    public void listSensors_Success_EmptyResponse() {
+
+        reset(routingContext, dataBaseClient, httpServerResponse);
+
+        // Database query result
+        List<JsonArray> resultsList = new ArrayList<>();
+        ResultSet resultSet = new ResultSet()
+                .setColumnNames(Arrays.asList("sensorId", "location", "creationTime"))
+                .setResults(resultsList);
+
+        // Response data - empty
+        List<JsonObject> responseList = new ArrayList<>();
+        JsonObject response = new JsonObject()
+                .put("data", responseList);
+
+        // Set up database client to return an empty response
+        expect(dataBaseClient.selectAllSensors()).andReturn(Single.just(resultSet));
+        // Set up the Created response
+        expect(routingContext.response()).andReturn(httpServerResponse);
+        expect(httpServerResponse.setStatusCode(200)).andReturn(httpServerResponse);
+        expect(httpServerResponse.setStatusMessage("OK")).andReturn(httpServerResponse);
+        expect(httpServerResponse.end(response.toBuffer())).andReturn(null);
+
+        replay(routingContext, dataBaseClient, httpServerResponse);
+
+        sensorApiImpl.listSensors(routingContext);
+
+        verify(routingContext, dataBaseClient, httpServerResponse);
     }
 
     @Test
     public void listSensors_DatabaseClientError() {
 
+        reset(routingContext, dataBaseClient, httpServerResponse);
+
+        // Set up database client to return an error
+        expect(dataBaseClient.selectAllSensors()).andReturn(Single.error(new Exception("Error!")));
+        // Set up the Created response
+        expect(routingContext.response()).andReturn(httpServerResponse);
+        expect(httpServerResponse.setStatusCode(500)).andReturn(httpServerResponse);
+        expect(httpServerResponse.setStatusMessage("Internal Server Error")).andReturn(httpServerResponse);
+        expect(httpServerResponse.end()).andReturn(null);
+
+        replay(routingContext, dataBaseClient, httpServerResponse);
+
+        sensorApiImpl.listSensors(routingContext);
+
+        verify(routingContext, dataBaseClient, httpServerResponse);
     }
 
     @Test
     public void getSensor_Success() {
 
+        reset(routingContext, dataBaseClient, httpServerResponse);
+
+        // Create request parameters
+        Map<String, RequestParameter> pathParameterMap = new HashMap<>();
+        pathParameterMap .put("sensorId", new RequestParameterImpl("123"));
+        RequestParametersImpl requestParameters = createPathParameters(pathParameterMap);
+
+//
+//        // Create request parameters
+//        Map<String, RequestParameter> pathParameterMap = new HashMap<>();
+//        pathParameterMap .put("sensorId", new RequestParameterImpl("123"));
+//        RequestParametersImpl requestParameters = createPathParameters(pathParameterMap);
+//
+//        // Database query result
+//        List<JsonArray> resultsList = new ArrayList<>();
+//        resultsList.add(createGetSensorResults("123", "somewhere", "2024-01-24T21:00:01.000Z"));
+//        List<String> fieldNames = Arrays.asList("sensorId", "location", "creationTime");
+//        ResultSet resultSet = createResultSet(fieldNames, resultsList);
+
+        // Database query result
+        JsonArray results = new JsonArray()
+                .add("123")
+                .add("somewhere")
+                .add("2024-01-24T21:00:00.000Z");
+        List<JsonArray> resultsList = new ArrayList<>();
+        resultsList.add(results);
+        ResultSet resultSet = new ResultSet()
+                .setColumnNames(Arrays.asList("sensorId", "location", "creationTime"))
+                .setResults(resultsList);
+
+        // Response data
+        JsonObject responseData = new JsonObject()
+                .put("sensorId", "123")
+                .put("location", "somewhere")
+                .put("creationTime", "2024-01-24T21:00:00.000Z");
+        List<JsonObject> responseList = new ArrayList<>();
+        responseList.add(responseData);
+        JsonObject response = new JsonObject()
+                .put("data", responseList);
+
+        // Set up routing context
+        expect(routingContext.get(anyString())).andReturn(requestParameters);
+        // Set up database client to return successful response with data
+        expect(dataBaseClient.selectSensor(anyObject())).andReturn(Single.just(resultSet));
+        // Set up the Created response
+        expect(routingContext.response()).andReturn(httpServerResponse);
+        expect(httpServerResponse.setStatusCode(200)).andReturn(httpServerResponse);
+        expect(httpServerResponse.setStatusMessage("OK")).andReturn(httpServerResponse);
+        expect(httpServerResponse.end(response.toBuffer())).andReturn(null);
+
+        replay(routingContext, dataBaseClient, httpServerResponse);
+
+        sensorApiImpl.getSensor(routingContext);
+
+        verify(routingContext, dataBaseClient, httpServerResponse);
+    }
+
+    @Test
+    public void getSensor_Success_EmptyResponse() {
+        reset(routingContext, dataBaseClient, httpServerResponse);
+
+        // Create request parameters
+        Map<String, RequestParameter> pathParameterMap = new HashMap<>();
+        pathParameterMap .put("sensorId", new RequestParameterImpl("123"));
+        RequestParametersImpl requestParameters = createPathParameters(pathParameterMap);
+
+        // Database query result - no matches
+        List<String> fieldNames = Arrays.asList("sensorId", "location", "creationTime");
+        ResultSet resultSet = createResultSet(fieldNames, new ArrayList<>());
+
+        // Response data - empty
+        JsonObject responseData = createResponseData(fieldNames, new ArrayList<>());
+
+        // Set up routing context
+        expect(routingContext.get(anyString())).andReturn(requestParameters);
+        // Set up database client to return successful response with data
+        expect(dataBaseClient.selectSensor(anyObject())).andReturn(Single.just(resultSet));
+        // Set up the Created response
+        expect(routingContext.response()).andReturn(httpServerResponse);
+        expect(httpServerResponse.setStatusCode(200)).andReturn(httpServerResponse);
+        expect(httpServerResponse.setStatusMessage("OK")).andReturn(httpServerResponse);
+        expect(httpServerResponse.end(responseData.toBuffer())).andReturn(null);
+
+        replay(routingContext, dataBaseClient, httpServerResponse);
+
+        sensorApiImpl.getSensor(routingContext);
+
+        verify(routingContext, dataBaseClient, httpServerResponse);
+    }
+
+    @Test
+    public void getSensor_DatabaseReturnsMultipleResults() {
+        // Todo
     }
 
     @Test
     public void getSensor_DatabaseClientError() {
 
+        reset(routingContext, dataBaseClient, httpServerResponse);
+
+        // Create request parameters
+        Map<String, RequestParameter> pathParameterMap = new HashMap<>();
+        pathParameterMap .put("sensorId", new RequestParameterImpl("123"));
+        RequestParametersImpl requestParameters = createPathParameters(pathParameterMap);
+
+        // Set up routing context
+        expect(routingContext.get(anyString())).andReturn(requestParameters);
+        // Set up database client to return successful response with data
+        expect(dataBaseClient.selectSensor(anyObject())).andReturn(Single.error(new Exception("Error!")));
+        // Set up the Created response
+        expect(routingContext.response()).andReturn(httpServerResponse);
+        expect(httpServerResponse.setStatusCode(500)).andReturn(httpServerResponse);
+        expect(httpServerResponse.setStatusMessage("Internal Server Error")).andReturn(httpServerResponse);
+        expect(httpServerResponse.end()).andReturn(null);
+
+        replay(routingContext, dataBaseClient, httpServerResponse);
+
+        sensorApiImpl.getSensor(routingContext);
+
+        verify(routingContext, dataBaseClient, httpServerResponse);
     }
 
-    private RequestParameters createPathParameters(Map<String, RequestParameter> parameters) {
+    private RequestParametersImpl createPathParameters(Map<String, RequestParameter> parameters) {
         RequestParametersImpl requestParameters = new RequestParametersImpl();
         requestParameters.setPathParameters(parameters);
-        return requestParameters;
-    }
-
-    private RequestParameters createQueryParameters(Map<String, RequestParameter> parameters) {
-        RequestParametersImpl requestParameters = new RequestParametersImpl();
-        requestParameters.setQueryParameters(parameters);
         return requestParameters;
     }
 
@@ -451,5 +693,32 @@ public class TestSensorApiImpl {
         RequestParametersImpl requestParameters = new RequestParametersImpl();
         requestParameters.setBody(requestParameter);
         return requestParameters;
+    }
+
+    private JsonArray createGetSensorResults(String sensorId, String location, String creationTime) {
+        return new JsonArray()
+                .add(sensorId)
+                .add(location)
+                .add(creationTime);
+    }
+
+    private ResultSet createResultSet(List<String> fieldNames, List<JsonArray> resultsList) {
+        return new ResultSet()
+                .setColumnNames(fieldNames)
+                .setResults(resultsList);
+    }
+
+
+    private JsonObject createResponseData(List<String> fieldNames, List<JsonArray> resultsList) {
+        List<JsonObject> responseList = new ArrayList<>();
+        if (!resultsList.isEmpty()) {
+            resultsList.forEach(results -> {
+                JsonObject jsonObject = new JsonObject();
+                for (int i = 0; i < fieldNames.size(); i++) {
+                    jsonObject.put(fieldNames.get(i), results.getValue(i));
+                }
+            });
+        }
+        return new JsonObject().put("data", responseList);
     }
 }

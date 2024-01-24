@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import projects.sensor.api.Main;
 import projects.sensor.api.database.DatabaseClient;
+import projects.sensor.model.CreateSensorRequest;
 import projects.sensor.model.UpdateRequest;
 import projects.sensor.api.util.TimeUtil;
 
@@ -134,18 +135,20 @@ public class SensorApiImpl implements SensorApi {
     public void createSensor(RoutingContext routingContext) {
         RequestParameters  params = routingContext.get(ValidationHandler.REQUEST_CONTEXT_KEY);
         RequestParameter body = params.body();
-        JsonObject jsonBody = body.getJsonObject();
-        String sensorId = jsonBody.getString("sensorId");
-        String location = jsonBody.getString("location");
+
+        // ToDo - handle case where sensorID already exists - database will throw primary key exception
+        // Should sensor-id have a max length?
+        // Should location be a time zones?
+        CreateSensorRequest createSensorRequest = body != null ? mapper.convertValue(body.get(), new TypeReference<CreateSensorRequest>(){}) : null;
+
         Timestamp timestamp = new java.sql.Timestamp(System.currentTimeMillis());
         String dateTimeString = new SimpleDateFormat("y-MM-dd HH:mm:ss.SSS").format(timestamp);
+        LOGGER.info("createSensor - request = {}, creationTime = {}", createSensorRequest, dateTimeString);
 
         JsonArray queryParams = new JsonArray();
-        queryParams.add(sensorId);
-        queryParams.add(location);
+        queryParams.add(createSensorRequest.getSensorId());
+        queryParams.add(createSensorRequest.getLocation());
         queryParams.add(dateTimeString);
-
-        LOGGER.info("createSensor - sensorId = {}, location = {}, creationTime = {}", sensorId, location, dateTimeString);
 
         databaseClient.insertSensor(queryParams).subscribe(result -> {
             createdResponse(routingContext);
@@ -170,9 +173,14 @@ public class SensorApiImpl implements SensorApi {
         RequestParameter sensorId = params.pathParameter("sensorId");
         LOGGER.info("getSensor - sensorId = {}", sensorId);
 
+        // Todo - return 400 if sensorId not found
+
         JsonArray queryParams = new JsonArray();
         queryParams.add(sensorId);
         databaseClient.selectSensor(queryParams).subscribe(resultSet -> {
+            if (resultSet.getRows().size() > 1) {
+                LOGGER.error("getSensor - returned more than one result for sensorId = {}, results = {}, ", sensorId, resultSet.getRows());
+            }
             JsonObject jsonResponse = new JsonObject().put("data", resultSet.getRows());
             okResponse(routingContext, jsonResponse);
         }, e -> internalServerError(routingContext));
