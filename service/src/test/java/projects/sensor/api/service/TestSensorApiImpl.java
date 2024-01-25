@@ -2,6 +2,7 @@ package projects.sensor.api.service;
 
 import io.reactivex.Single;
 
+import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -15,10 +16,10 @@ import io.vertx.ext.web.validation.impl.RequestParametersImpl;
 import org.easymock.EasyMockRunner;
 import org.easymock.Mock;
 import org.easymock.TestSubject;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import projects.sensor.api.database.DatabaseClient;
+import projects.sensor.api.service.exceptions.NotFoundException;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -26,7 +27,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.easymock.EasyMock.createMock;
 import static org.easymock.EasyMock.anyObject;
 import static org.easymock.EasyMock.anyString;
 import static org.easymock.EasyMock.expect;
@@ -140,6 +140,7 @@ public class TestSensorApiImpl {
         expect(routingContext.response()).andReturn(httpServerResponse);
         expect(httpServerResponse.setStatusCode(200)).andReturn(httpServerResponse);
         expect(httpServerResponse.setStatusMessage("OK")).andReturn(httpServerResponse);
+        expect(httpServerResponse.putHeader(HttpHeaders.CONTENT_TYPE, "application/json")).andReturn(httpServerResponse);
         expect(httpServerResponse.end(responseData.toBuffer())).andReturn(null);
 
         replay(routingContext, dataBaseClient, httpServerResponse);
@@ -177,6 +178,7 @@ public class TestSensorApiImpl {
         expect(routingContext.response()).andReturn(httpServerResponse);
         expect(httpServerResponse.setStatusCode(200)).andReturn(httpServerResponse);
         expect(httpServerResponse.setStatusMessage("OK")).andReturn(httpServerResponse);
+        expect(httpServerResponse.putHeader(HttpHeaders.CONTENT_TYPE, "application/json")).andReturn(httpServerResponse);
         expect(httpServerResponse.end(responseData.toBuffer())).andReturn(null);
 
         replay(routingContext, dataBaseClient, httpServerResponse);
@@ -249,6 +251,7 @@ public class TestSensorApiImpl {
         expect(routingContext.response()).andReturn(httpServerResponse);
         expect(httpServerResponse.setStatusCode(200)).andReturn(httpServerResponse);
         expect(httpServerResponse.setStatusMessage("OK")).andReturn(httpServerResponse);
+        expect(httpServerResponse.putHeader(HttpHeaders.CONTENT_TYPE, "application/json")).andReturn(httpServerResponse);
         expect(httpServerResponse.end(responseData.toBuffer())).andReturn(null);
 
         replay(routingContext, dataBaseClient, httpServerResponse);
@@ -286,6 +289,7 @@ public class TestSensorApiImpl {
         expect(routingContext.response()).andReturn(httpServerResponse);
         expect(httpServerResponse.setStatusCode(200)).andReturn(httpServerResponse);
         expect(httpServerResponse.setStatusMessage("OK")).andReturn(httpServerResponse);
+        expect(httpServerResponse.putHeader(HttpHeaders.CONTENT_TYPE, "application/json")).andReturn(httpServerResponse);
         expect(httpServerResponse.end(responseData.toBuffer())).andReturn(null);
 
         replay(routingContext, dataBaseClient, httpServerResponse);
@@ -430,6 +434,7 @@ public class TestSensorApiImpl {
         expect(routingContext.response()).andReturn(httpServerResponse);
         expect(httpServerResponse.setStatusCode(200)).andReturn(httpServerResponse);
         expect(httpServerResponse.setStatusMessage("OK")).andReturn(httpServerResponse);
+        expect(httpServerResponse.putHeader(HttpHeaders.CONTENT_TYPE, "application/json")).andReturn(httpServerResponse);
         expect(httpServerResponse.end(responseData.toBuffer())).andReturn(null);
 
         replay(routingContext, dataBaseClient, httpServerResponse);
@@ -457,6 +462,7 @@ public class TestSensorApiImpl {
         expect(routingContext.response()).andReturn(httpServerResponse);
         expect(httpServerResponse.setStatusCode(200)).andReturn(httpServerResponse);
         expect(httpServerResponse.setStatusMessage("OK")).andReturn(httpServerResponse);
+        expect(httpServerResponse.putHeader(HttpHeaders.CONTENT_TYPE, "application/json")).andReturn(httpServerResponse);
         expect(httpServerResponse.end(responseData.toBuffer())).andReturn(null);
 
         replay(routingContext, dataBaseClient, httpServerResponse);
@@ -511,6 +517,7 @@ public class TestSensorApiImpl {
         expect(routingContext.response()).andReturn(httpServerResponse);
         expect(httpServerResponse.setStatusCode(200)).andReturn(httpServerResponse);
         expect(httpServerResponse.setStatusMessage("OK")).andReturn(httpServerResponse);
+        expect(httpServerResponse.putHeader(HttpHeaders.CONTENT_TYPE, "application/json")).andReturn(httpServerResponse);
         expect(httpServerResponse.end(responseData.toBuffer())).andReturn(null);
 
         replay(routingContext, dataBaseClient, httpServerResponse);
@@ -533,18 +540,13 @@ public class TestSensorApiImpl {
         List<String> fieldNames = Arrays.asList("sensorId", "location", "creationTime");
         ResultSet resultSet = createResultSet(fieldNames, new ArrayList<>());
 
-        // Response data - empty
-        JsonObject responseData = createResponseData(fieldNames, new ArrayList<>());
-
         // Set up routing context
         expect(routingContext.get(anyString())).andReturn(requestParameters);
         // Set up database client to return successful response with data
         expect(dataBaseClient.selectSensor(anyObject())).andReturn(Single.just(resultSet));
         // Set up the Created response
-        expect(routingContext.response()).andReturn(httpServerResponse);
-        expect(httpServerResponse.setStatusCode(200)).andReturn(httpServerResponse);
-        expect(httpServerResponse.setStatusMessage("OK")).andReturn(httpServerResponse);
-        expect(httpServerResponse.end(responseData.toBuffer())).andReturn(null);
+        routingContext.fail(isA(NotFoundException.class));
+        expectLastCall();
 
         replay(routingContext, dataBaseClient, httpServerResponse);
 

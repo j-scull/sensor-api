@@ -19,6 +19,7 @@ public class ResponseUtil {
         routingContext.response()
                 .setStatusCode(200)
                 .setStatusMessage("OK")
+                .putHeader(HttpHeaders.CONTENT_TYPE, "application/json")
                 .end(jsonObject.toBuffer());
     }
 

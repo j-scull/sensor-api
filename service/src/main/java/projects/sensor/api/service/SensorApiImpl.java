@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import projects.sensor.api.Main;
 import projects.sensor.api.database.DatabaseClient;
+import projects.sensor.api.service.exceptions.NotFoundException;
 import projects.sensor.model.CreateSensorRequest;
 import projects.sensor.model.UpdateRequest;
 import projects.sensor.api.util.TimeUtil;
@@ -53,8 +54,6 @@ public class SensorApiImpl implements SensorApi {
         this.mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
         this.mapper.registerModule(new JavaTimeModule());
     }
-
-    // Todo - write unit tests
 
     @Override
     public void logData(RoutingContext routingContext) {
@@ -173,16 +172,37 @@ public class SensorApiImpl implements SensorApi {
         RequestParameter sensorId = params.pathParameter("sensorId");
         LOGGER.info("getSensor - sensorId = {}", sensorId);
 
-        // Todo - return 400 if sensorId not found
-
         JsonArray queryParams = new JsonArray();
         queryParams.add(sensorId);
         databaseClient.selectSensor(queryParams).subscribe(resultSet -> {
-            if (resultSet.getRows().size() > 1) {
-                LOGGER.error("getSensor - returned more than one result for sensorId = {}, results = {}, ", sensorId, resultSet.getRows());
+            // Fail with status 404 if sensorId not found
+            if (resultSet.getRows().isEmpty()) {
+                String message = messageBuilder("getSensor - sensorID = ", sensorId.getString(), " not found");
+                LOGGER.error(message);
+                routingContext.fail(new NotFoundException(message));
+            } else {
+                JsonObject jsonResponse = new JsonObject().put("data", resultSet.getRows());
+                okResponse(routingContext, jsonResponse);
             }
-            JsonObject jsonResponse = new JsonObject().put("data", resultSet.getRows());
-            okResponse(routingContext, jsonResponse);
         }, e -> internalServerError(routingContext));
+    }
+
+    // Handle different failure scenarios
+    // Should this go here?
+    public void failureHandler(RoutingContext routingContext) {
+        if (routingContext.failure() instanceof NotFoundException) {
+            notFoundResponse(routingContext);
+        } else {
+            badRequestResponse(routingContext);
+        }
+    }
+
+    // Todo - extract to centralized util class
+    private String messageBuilder(String ... values) {
+        StringBuilder stringBuilder = new StringBuilder();
+        for (String value : values) {
+            stringBuilder.append(value);
+        }
+        return  stringBuilder.toString();
     }
 }

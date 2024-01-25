@@ -90,7 +90,7 @@ public class OpenApiRouter extends AbstractVerticle {
      */
     private void addHandler(RouterBuilder routerBuilder, String operationId, Handler<RoutingContext> operationHandler) {
         LOGGER.info("Adding handler for operation = {}", operationId);
-        routerBuilder.operation(operationId).handler(operationHandler).failureHandler(ResponseUtil::badRequestResponse);
+        routerBuilder.operation(operationId).handler(operationHandler).failureHandler(sensorApiImpl::failureHandler);
     }
 
     /**
