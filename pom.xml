@@ -13,6 +13,7 @@
   <modules>
     <module>api</module>
     <module>service</module>
+    <module>docker</module>
   </modules>
 
   <properties>
@@ -23,6 +24,7 @@
     <junit.version>4.13.2</junit.version>
     <mockito.version>5.7.0</mockito.version>
     <easymock.version>5.2.0</easymock.version>
+    <dockerfile.maven.version>1.4.13</dockerfile.maven.version>
 
     <slf4j.version>2.0.7</slf4j.version>
 
