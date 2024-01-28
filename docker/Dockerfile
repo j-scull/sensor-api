@@ -1,9 +1,8 @@
 FROM openjdk:8-jre
 
-# copy jar to something like /usr/share/sensor-api/sensor-api.jar
+ARG JAR_FILE
+ADD ${JAR_FILE} /usr/share/sensor-api/${JAR_FILE}
 
-#change permissions
-
-ENTRYPOINT ["/usr/bin/java", "-jar", "/usr/share/sensor-api/sensor-api.jar"]
+ENTRYPOINT ["/usr/bin/java", "-jar", "/usr/share/sensor-api/${JAR_FILE}"]
 
 EXPOSE 8080
