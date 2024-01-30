@@ -87,7 +87,7 @@
                         <configuration>
                             <executable>cp</executable>
                             <arguments>
-                                <argument>../service/target/sensor-api-service-${project.version}.jar</argument>
+                                <argument>../service/target/sensor-api-service-${project.version}-jar-with-dependencies.jar</argument>
                                 <argument>${tmp.context.name}</argument>
                             </arguments>
                         </configuration>
@@ -113,7 +113,7 @@
                     <repository>projects/sensorapi</repository>
                     <tag>${project.version}</tag>
                     <buildArgs>
-                        <JAR_FILE>sensor-api-service-${project.version}.jar</JAR_FILE>
+                        <JAR_FILE>sensor-api-service-${project.version}-jar-with-dependencies.jar</JAR_FILE>
                     </buildArgs>
                 </configuration>
             </plugin>
