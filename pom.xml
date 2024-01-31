@@ -31,6 +31,7 @@
     <vertx.version>4.4.6</vertx.version>
     <vertx.rx.java.version>4.4.6</vertx.rx.java.version>
     <jackson.version>2.14.2</jackson.version>
+    <snakeyaml.version>2.2</snakeyaml.version>
     <swagger.ui.version>5.9.0</swagger.ui.version>
     <sqlite.version>3.43.2.2</sqlite.version>
 
@@ -134,6 +135,12 @@
       <groupId>com.fasterxml.jackson.datatype</groupId>
       <artifactId>jackson-datatype-jsr310</artifactId>
       <version>${jackson.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.yaml</groupId>
+      <artifactId>snakeyaml</artifactId>
+      <version>${snakeyaml.version}</version>
     </dependency>
 
     <!-- Will use sqlite for testing   -->

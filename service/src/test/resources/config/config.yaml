@@ -1,0 +1,3 @@
+databaseUrl: "myDatabaseUrl"
+databaseDriverClass: "myDatabaseDriverClass"
+enableSwaggerUi: false

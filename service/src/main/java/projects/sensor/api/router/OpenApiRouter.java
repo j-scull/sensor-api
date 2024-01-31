@@ -18,6 +18,8 @@ import projects.sensor.api.Main;
 import projects.sensor.api.service.SensorApiImpl;
 import projects.sensor.api.util.ResponseUtil;
 
+import java.io.File;
+
 import static projects.sensor.api.util.FileUtil.copyFile;
 import static projects.sensor.api.util.FileUtil.extractFilesToDirectory;
 import static projects.sensor.api.util.FileUtil.replaceFile;
@@ -68,18 +70,14 @@ public class OpenApiRouter extends AbstractVerticle {
                 })
                 .map(RouterBuilder::createRouter)
                 .map(router -> {
-
-                    // ToDo - revise sequence of events on start up
-                    // Swagger-ui is mounted after server starts listening, should be happen before
-                    mountSwaggerUI(router);
-
+                    // Setup Swagger-ui
+                    // Todo - Allow for this to be disabled, but keep default enabled
+                    mountSwaggerUI(router).subscribe();
                     // Handle request for unknown paths
-                    router.errorHandler(404, ResponseUtil::notFoundResponse);
-
-                    return router;
+                    return router.errorHandler(404, ResponseUtil::notFoundResponse);
                 })
                 .onSuccess(r -> LOGGER.info("OpenApiRouter - Spec loaded successfully"))
-                .onFailure(e -> LOGGER.error("OpenApiRouter - Failed to load spec! Exception = {}", e.getCause()));
+                .onFailure(e -> LOGGER.error("OpenApiRouter - Failed to load spec! Exception"));
     }
 
     /**
@@ -100,17 +98,17 @@ public class OpenApiRouter extends AbstractVerticle {
      * Creates the swagger-ui endpoint
      * @param router - a vertx router
      */
-    private void mountSwaggerUI(Router router) {
-        extractFilesToDirectory(vertx.fileSystem(), "META-INF/resources/webjars/swagger-ui/5.9.0", SWAGGER_UI_DIR)
-                .doOnError(e -> LOGGER.error("Failed to create swagger-ui endpoint, exception = {}", e))
-                .subscribe(r -> {
-                    Single.concat(
+    private Single<File> mountSwaggerUI(Router router) {
+        return extractFilesToDirectory(vertx.fileSystem(), "META-INF/resources/webjars/swagger-ui/5.9.0", SWAGGER_UI_DIR)
+                .map(r1 -> Single.concat(
                             replaceFile(vertx.fileSystem(), "swagger-initializer-override.js", SWAGGER_UI_DIR + "/swagger-initializer.js"),
-                            copyFile(vertx.fileSystem(), SPEC_FILE, SWAGGER_UI_DIR + "/" + SPEC_FILE, true)
-                    ).subscribe(res -> {
-                        router.route("/*").handler(StaticHandler.create(SWAGGER_UI_DIR));
-                        LOGGER.info("Created swagger-ui endpoint successfully");
-                    }, e -> LOGGER.error("Failed to create swagger-ui endpoint, exception = {}", e));
-                });
+                            copyFile(vertx.fileSystem(), SPEC_FILE, SWAGGER_UI_DIR + "/" + SPEC_FILE, true))
+                        .toList()
+                        .map(r2 ->  {
+                                router.route("/*").handler(StaticHandler.create(SWAGGER_UI_DIR));
+                                return new File(SWAGGER_UI_DIR);}))
+                .flatMap(f -> f)
+                .doOnError(e -> LOGGER.error("Failed to create swagger-ui endpoint, exception"))
+                .doOnSuccess(s -> LOGGER.info("Created swagger-ui endpoint successfully"));
     }
 }
