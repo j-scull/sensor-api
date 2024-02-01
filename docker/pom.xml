@@ -110,7 +110,7 @@
                 <configuration>
                     <!-- Todo - create properties for these paths  -->
                     <contextDirectory>${tmp.context.name}</contextDirectory>
-                    <repository>projects/sensorapi</repository>
+                    <repository>${docker.image.name}</repository>
                     <tag>${project.version}</tag>
                     <buildArgs>
                         <JAR_FILE>sensor-api-service-${project.version}-jar-with-dependencies.jar</JAR_FILE>

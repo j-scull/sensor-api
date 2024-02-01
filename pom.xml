@@ -14,6 +14,7 @@
     <module>api</module>
     <module>service</module>
     <module>docker</module>
+    <module>integration-test</module>
   </modules>
 
   <properties>
@@ -21,23 +22,28 @@
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
 
+    <!-- Test dependencies -->
     <junit.version>4.13.2</junit.version>
     <mockito.version>5.7.0</mockito.version>
     <easymock.version>5.2.0</easymock.version>
-    <dockerfile.maven.version>1.4.13</dockerfile.maven.version>
-
-    <slf4j.version>2.0.7</slf4j.version>
+    <karate.version>1.4.1</karate.version>
 
     <vertx.version>4.4.6</vertx.version>
     <vertx.rx.java.version>4.4.6</vertx.rx.java.version>
     <jackson.version>2.14.2</jackson.version>
     <snakeyaml.version>2.2</snakeyaml.version>
+    <slf4j.version>2.0.7</slf4j.version>
+
     <swagger.ui.version>5.9.0</swagger.ui.version>
     <sqlite.version>3.43.2.2</sqlite.version>
 
     <maven.antrun.plugin.version>3.1.0</maven.antrun.plugin.version>
     <exec.maven.plugin.version>3.1.1</exec.maven.plugin.version>
     <maven.assembly.plugin.version>3.6.0</maven.assembly.plugin.version>
+    <maven.resources.plugin.version>3.2.0</maven.resources.plugin.version>
+
+    <dockerfile.maven.version>1.4.13</dockerfile.maven.version>
+    <docker.image.name>projects/sensor-api</docker.image.name>
 
   </properties>
 
@@ -61,6 +67,13 @@
       <groupId>org.easymock</groupId>
       <artifactId>easymock</artifactId>
       <version>${easymock.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>com.intuit.karate</groupId>
+      <artifactId>karate-core</artifactId>
+      <version>${karate.version}</version>
       <scope>test</scope>
     </dependency>
 
@@ -166,6 +179,12 @@
       <groupId>org.apache.maven.plugins</groupId>
       <artifactId>maven-assembly-plugin</artifactId>
       <version>${maven.assembly.plugin.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.maven.plugins</groupId>
+      <artifactId>maven-resources-plugin</artifactId>
+      <version>${maven.resources.plugin.version}</version>
     </dependency>
 
   </dependencies>
