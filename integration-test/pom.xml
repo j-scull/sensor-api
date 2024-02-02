@@ -16,6 +16,8 @@
     <build>
 
         <plugins>
+
+            <!-- copy resources to target directory and filter maven properties  -->
             <plugin>
                 <artifactId>maven-resources-plugin</artifactId>
                 <executions>
@@ -40,6 +42,51 @@
                     </execution>
                 </executions>
             </plugin>
+
+            <!-- spin up the container for testing, using docker compose file -->
+            <plugin>
+                <artifactId>exec-maven-plugin</artifactId>
+                <groupId>org.codehaus.mojo</groupId>
+                <version>${exec.maven.plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>start container</id>
+                        <phase>test</phase>
+                        <configuration>
+                            <executable>docker</executable>
+                            <commandlineArgs>compose -f target/test-classes/docker-compose/docker-compose.yaml up -d</commandlineArgs>
+                        </configuration>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- run the integration tests -->
+            <!-- Todo         -->
+
+            <!-- tear down the container used for testing -->
+            <plugin>
+                <artifactId>exec-maven-plugin</artifactId>
+                <groupId>org.codehaus.mojo</groupId>
+                <version>${exec.maven.plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>tear down containers</id>
+                        <phase>test</phase>
+                        <configuration>
+                            <executable>docker</executable>
+                            <commandlineArgs>compose -f target/test-classes/docker-compose/docker-compose.yaml down -v</commandlineArgs>
+                        </configuration>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+
         </plugins>
 
         <testResources>

@@ -1,7 +1,32 @@
 services:
+
   sensor-api:
     image: ${docker.image.name}:${project.version}
     ports:
       - "9090:9090"
+    expose:
+      - "9090"
     environment:
       - LOG_LEVEL=debug
+
+  database:
+    image: mysql/mysql-server:${mysql.server.version}
+    restart: always
+    environment:
+      MYSQL_DATABASE: 'database'
+      MYSQL_USER: 'user'
+      MYSQL_PASSWORD: 'password'
+      MYSQL_ROOT_PASSWORD: 'password'
+      MYSQL_ROOT_HOST: '%'
+    ports:
+      - '3306:3306'
+    expose:
+      - '3306'
+    volumes:
+      - ${project.basedir}/target/test-classes/config/database/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - db:/var/lib/mysql
+
+volumes:
+  db:
+    driver: local
+

@@ -44,6 +44,7 @@
 
     <dockerfile.maven.version>1.4.13</dockerfile.maven.version>
     <docker.image.name>projects/sensor-api</docker.image.name>
+    <mysql.server.version>5.7</mysql.server.version>
 
   </properties>
 
