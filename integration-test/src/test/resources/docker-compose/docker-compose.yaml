@@ -8,6 +8,10 @@ services:
       - "9090"
     environment:
       - LOG_LEVEL=debug
+    volumes:
+      - ${project.basedir}/target/test-classes/config/service/config.yaml:/usr/share/sensor-api/config
+
+
 
   database:
     image: mysql/mysql-server:${mysql.server.version}
