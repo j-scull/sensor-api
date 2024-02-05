@@ -1,4 +1,1 @@
-databaseConfig:
-  mySQLConfig:
-
 enableSwaggerUi: false

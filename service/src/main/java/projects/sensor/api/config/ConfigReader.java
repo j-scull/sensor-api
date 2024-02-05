@@ -1,25 +1,24 @@
 package projects.sensor.api.config;
 
-import org.yaml.snakeyaml.LoaderOptions;
-import org.yaml.snakeyaml.constructor.Constructor;
-import org.yaml.snakeyaml.Yaml;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
-import java.io.InputStream;
+import java.io.File;
+import java.io.IOException;
 
 public class ConfigReader {
 
     private final static String DEFAULT_CONFIG_FILE= "config/config.yaml";
 
-    public static Config getConfig() {
+    private static final ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+
+    public static Config getConfig() throws IOException {
         return getConfig(DEFAULT_CONFIG_FILE);
     }
 
     // Todo - handle invalid config
-    public static Config getConfig(String configFile) {
-        InputStream inputStream = ConfigReader.class
-                .getClassLoader()
-                .getResourceAsStream(configFile);
-        Yaml yaml = new Yaml(new Constructor(Config.class, new LoaderOptions()));
-        return yaml.load(inputStream);
+    public static Config getConfig(String configFile) throws IOException {
+        return mapper.readValue(new File(configFile), Config.class);
     }
+
 }

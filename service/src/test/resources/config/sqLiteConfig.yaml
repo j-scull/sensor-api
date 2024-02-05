@@ -1,0 +1,4 @@
+databaseConfig:
+  type: sqlite
+  url: "jdbc:sqlite:/sensor-api/service/target/db/test.db"
+  driverClass: "org.sqlite.JDBC"

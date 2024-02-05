@@ -1,17 +1,13 @@
 package projects.sensor.api.config;
 
+import projects.sensor.api.config.database.DatabaseConfig;
+
 public class Config {
 
     /**
-     * The url for a database, used for testing purposes
-     * The service will read from this if env variable DATABASE_URL is not set
+     * The Database configuration used by the service
      */
-    private String databaseUrl;
-
-    /**
-     * The driver used for the database
-     */
-    private String databaseDriverClass;
+    private DatabaseConfig databaseConfig;
 
     /**
      * Enable or disable the swagger-ui
@@ -19,19 +15,12 @@ public class Config {
      */
     private boolean enableSwaggerUi = true;
 
-    public String getDatabaseUrl() {
-        return databaseUrl;
+    public DatabaseConfig getDatabaseConfig() {
+        return this.databaseConfig;
     }
 
-    public void setDatabaseUrl(String databaseUrl) {
-        this.databaseUrl = databaseUrl;
-    }
-    public String getDatabaseDriverClass() {
-        return databaseDriverClass;
-    }
-
-    public void setDatabaseDriverClass(String databaseDriverClass) {
-        this.databaseDriverClass = databaseDriverClass;
+    public void setDatabaseConfig(DatabaseConfig databaseConfig) {
+        this.databaseConfig = databaseConfig;
     }
 
     public boolean isEnableSwaggerUi() {

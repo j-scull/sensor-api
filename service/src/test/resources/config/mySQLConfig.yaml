@@ -1,0 +1,6 @@
+databaseConfig:
+    type: mysql
+    host: "10.10.10.10"
+    port: 1234
+    database: database
+    poolOptionsMaxSize: 4
