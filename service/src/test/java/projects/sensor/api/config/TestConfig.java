@@ -29,10 +29,11 @@ public class TestConfig {
         DatabaseConfig databaseConfig = config.getDatabaseConfig();
         assertEquals(databaseConfig.getUrl(), "jdbc:mysql://10.10.10.10:1234/database");
         assertTrue(databaseConfig instanceof MySQLConfig);
-        assertEquals(((MySQLConfig)databaseConfig).getHost(), "10.10.10.10");
-        assertEquals(((MySQLConfig)databaseConfig).getPort(), 1234);
-        assertEquals(((MySQLConfig)databaseConfig).getDatabase(), "database");
-        assertEquals(((MySQLConfig)databaseConfig).getPoolOptionsMaxSize(), 4);
+        MySQLConfig mySQLConfig = (MySQLConfig)databaseConfig;
+        assertEquals(mySQLConfig.getHost(), "10.10.10.10");
+        assertEquals(mySQLConfig.getPort(), 1234);
+        assertEquals(mySQLConfig.getDatabase(), "database");
+        assertEquals(mySQLConfig.getPoolOptionsMaxSize(), 4);
     }
 
     @Test
@@ -43,7 +44,9 @@ public class TestConfig {
         DatabaseConfig databaseConfig = config.getDatabaseConfig();
         assertEquals(databaseConfig.getUrl(), "jdbc:sqlite:/sensor-api/service/target/db/test.db");
         assertTrue(databaseConfig instanceof SQLiteConfig);
-        assertEquals(((SQLiteConfig)databaseConfig).getDriverClass(), "org.sqlite.JDBC");
+        SQLiteConfig sqLiteConfig = (SQLiteConfig)databaseConfig;
+        assertEquals(sqLiteConfig.getDriverClass(), "org.sqlite.JDBC");
+        assertEquals(sqLiteConfig.getMaxPoolSize(), 10);
     }
 
     // Todo - add test cases for invalid config

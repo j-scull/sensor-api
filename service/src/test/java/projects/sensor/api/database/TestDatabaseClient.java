@@ -6,6 +6,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
+import projects.sensor.api.config.database.SQLiteConfig;
 
 @RunWith(MockitoJUnitRunner.class)
 public class TestDatabaseClient {
@@ -23,9 +24,12 @@ public class TestDatabaseClient {
         // Set up SQLite database for testing
         SqliteUtil.createTables(DATABASE_URL);
 
-        // Test will cover the functionality in SensorApiImpl and SQLiteClient classes
+        SQLiteConfig config = new SQLiteConfig()
+                .setUrl(DATABASE_URL)
+                .setDriverClass(DATABASE_DRIVER_CLASS);
+
         vertx = Vertx.vertx();
-        databaseClient = new SQLiteClient(vertx, DATABASE_URL, DATABASE_DRIVER_CLASS);
+        databaseClient = new SQLiteClient(vertx, config);
     }
 
     @Test

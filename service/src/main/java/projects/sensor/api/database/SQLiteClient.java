@@ -11,7 +11,9 @@ import io.vertx.reactivex.ext.sql.SQLClient;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import projects.sensor.api.Main;
+import projects.sensor.api.config.database.SQLiteConfig;
 
 public class SQLiteClient implements DatabaseClient {
 
@@ -25,11 +27,11 @@ public class SQLiteClient implements DatabaseClient {
 
     SQLClient sqlClient;
 
-    public SQLiteClient(Vertx vertx, String url, String driverClass) {
+    public SQLiteClient(Vertx vertx, SQLiteConfig sqLiteConfig) {
         JsonObject config = new JsonObject()
-                .put("url", url)
-                .put("driver_class", driverClass)
-                .put("max_pool_size", 30);
+                .put("url", sqLiteConfig.getUrl())
+                .put("driver_class", sqLiteConfig.getDriverClass())
+                .put("max_pool_size", sqLiteConfig.getMaxPoolSize());
         LOGGER.info("Connecting to database with config = {}",config);
         sqlClient = JDBCClient.createShared(vertx,config);
     }

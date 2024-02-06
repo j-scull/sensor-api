@@ -15,6 +15,7 @@ import io.vertx.ext.web.validation.ValidationHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import projects.sensor.api.Main;
+import projects.sensor.api.config.Config;
 import projects.sensor.api.database.DatabaseClient;
 import projects.sensor.api.service.exceptions.NotFoundException;
 import projects.sensor.model.CreateSensorRequest;
@@ -33,9 +34,10 @@ import static projects.sensor.api.util.ResponseUtil.*;
  */
 public class SensorApiImpl implements SensorApi {
 
-    DatabaseClient databaseClient;
+    private Config config;
+    private DatabaseClient databaseClient;
 
-    ObjectMapper mapper;
+    private ObjectMapper mapper;
 
     private final Logger LOGGER = LoggerFactory.getLogger(Main.class);
 

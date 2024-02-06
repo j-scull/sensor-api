@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.Logger;
 
 import projects.sensor.api.Main;
+import projects.sensor.api.config.Config;
 import projects.sensor.api.service.SensorApiImpl;
 import projects.sensor.api.util.ResponseUtil;
 
@@ -29,12 +30,16 @@ public class OpenApiRouter extends AbstractVerticle {
     private static final String SPEC_FILE = "api.yaml";
     private static final String SWAGGER_UI_DIR = "swagger-ui";
 
-    private final Vertx vertx;
-    private final SensorApiImpl sensorApiImpl;
+    private Vertx vertx;
+
+    private Config config;
+    private SensorApiImpl sensorApiImpl;
+
     private final Logger LOGGER = LoggerFactory.getLogger(Main.class);
 
-    public OpenApiRouter(Vertx vertx, SensorApiImpl sensorApiImpl) {
+    public OpenApiRouter(Vertx vertx, Config config, SensorApiImpl sensorApiImpl) {
         this.vertx = vertx;
+        this.config = config;
         this.sensorApiImpl = sensorApiImpl;
     }
 
@@ -71,8 +76,9 @@ public class OpenApiRouter extends AbstractVerticle {
                 .map(RouterBuilder::createRouter)
                 .map(router -> {
                     // Setup Swagger-ui
-                    // Todo - Allow for this to be disabled, but keep default enabled
-                    mountSwaggerUI(router).subscribe();
+                    if (config.isEnableSwaggerUi()) {
+                        mountSwaggerUI(router).subscribe();
+                    }
                     // Handle request for unknown paths
                     return router.errorHandler(404, ResponseUtil::notFoundResponse);
                 })
