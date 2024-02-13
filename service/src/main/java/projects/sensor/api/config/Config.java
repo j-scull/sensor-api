@@ -30,4 +30,10 @@ public class Config {
     public void setEnableSwaggerUi(boolean enableSwaggerUi) {
         this.enableSwaggerUi = enableSwaggerUi;
     }
+
+    @Override
+    public String toString() {
+        return "Config=[enableSwaggerUi=" + enableSwaggerUi + ", " + databaseConfig + "]";
+    }
+
 }

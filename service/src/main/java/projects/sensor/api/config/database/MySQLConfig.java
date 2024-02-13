@@ -47,4 +47,10 @@ public class MySQLConfig implements DatabaseConfig {
         this.poolOptionsMaxSize = poolOptionsMaxSize;
     }
 
+    @Override
+    public String toString() {
+        return "MySQLConfig=[host=" + host + ", port=" + port + ", database=" + database +
+                ", poolOptionsMaxSize=" + poolOptionsMaxSize + "]";
+    }
+
 }

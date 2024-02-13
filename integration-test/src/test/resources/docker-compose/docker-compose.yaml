@@ -1,5 +1,7 @@
 services:
 
+  # Todo - setup test network
+
   sensor-api:
     image: ${docker.image.name}:${project.version}
     ports:
@@ -7,9 +9,11 @@ services:
     expose:
       - "9090"
     environment:
-      - LOG_LEVEL=debug
+      - user=${test.database.user}
+      - secret=${test.database.password}
+      - LOG_LEVEL="debug"
     volumes:
-      - ${project.basedir}/target/test-classes/config/service/config.yaml:/usr/share/sensor-api/config
+      - ${project.basedir}/target/test-classes/config/service/:/usr/share/sensor-api/config
 
 
 
@@ -18,8 +22,8 @@ services:
     restart: always
     environment:
       MYSQL_DATABASE: 'database'
-      MYSQL_USER: 'user'
-      MYSQL_PASSWORD: 'password'
+      MYSQL_USER: ${test.database.user}
+      MYSQL_PASSWORD: ${test.database.password}
       MYSQL_ROOT_PASSWORD: 'password'
       MYSQL_ROOT_HOST: '%'
     ports:

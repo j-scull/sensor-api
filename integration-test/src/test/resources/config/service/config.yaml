@@ -1,2 +1,6 @@
-databaseUrl: "jdbc:mysql://localhost:3306/mysql"
-databaseDriverClass: "com.mysql.jdbc.Driver"
+databaseConfig:
+  type: mysql
+  host: localhost
+  port: 3306
+  database: database
+  poolOptionsMaxSize: 4

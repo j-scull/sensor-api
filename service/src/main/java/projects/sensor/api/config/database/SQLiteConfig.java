@@ -72,4 +72,10 @@ public class SQLiteConfig implements DatabaseConfig {
         return this;
     }
 
+    @Override
+    public String toString() {
+        return "SQLiteConfig=[url=" + url + ", driverClass=" + driverClass +
+                ", maxPoolSize=" + maxPoolSize + "]";
+    }
+
 }

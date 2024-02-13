@@ -20,4 +20,7 @@ public interface DatabaseConfig {
      */
     String getUrl();
 
+
+    String toString();
+
 }

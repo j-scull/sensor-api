@@ -55,6 +55,7 @@ public class SensorApiImpl implements SensorApi {
         this.mapper = DatabindCodec.mapper();
         this.mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
         this.mapper.registerModule(new JavaTimeModule());
+        LOGGER.info("SensorApiImpl - successfully created");
     }
 
     @Override
