@@ -1,6 +1,14 @@
-services:
 
-  # Todo - setup test network
+# Todo - setup test network
+networks:
+  network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.18.0.0/24
+          gateway: 172.18.0.1
+
+services:
 
   sensor-api:
     image: ${docker.image.name}:${project.version}
@@ -14,7 +22,9 @@ services:
       - LOG_LEVEL="debug"
     volumes:
       - ${project.basedir}/target/test-classes/config/service/:/usr/share/sensor-api/config
-
+    networks:
+      network:
+        ipv4_address: 172.18.0.2
 
 
   database:
@@ -33,6 +43,9 @@ services:
     volumes:
       - ${project.basedir}/target/test-classes/config/database/init.sql:/docker-entrypoint-initdb.d/init.sql
       - db:/var/lib/mysql
+    networks:
+      network:
+        ipv4_address: 172.18.0.3
 
 volumes:
   db:

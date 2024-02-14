@@ -52,7 +52,7 @@ public class RestServerVerticle extends AbstractVerticle {
     }
 
     public void createHttpServer(Router router) {
-        LOGGER.info("RestServerVerticle - creating HTTP server with host = {} and port = {}", DEFAULT_HOST, DEFAULT_PORT);
+        LOGGER.info("RestServerVerticle - creating HTTP server with host={} and port={}", DEFAULT_HOST, DEFAULT_PORT);
         if (router != null) {
             // Start server instance
             HttpServer server = vertx.getDelegate().createHttpServer(new HttpServerOptions()
