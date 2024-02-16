@@ -26,7 +26,6 @@ import java.io.IOException;
 public class RestServerVerticle extends AbstractVerticle {
 
     private static final int DEFAULT_PORT = 9090;
-    private static final String DEFAULT_HOST = "localhost";
 
     private final Logger LOGGER = LoggerFactory.getLogger(Main.class);
 
@@ -52,12 +51,12 @@ public class RestServerVerticle extends AbstractVerticle {
     }
 
     public void createHttpServer(Router router) {
-        LOGGER.info("RestServerVerticle - creating HTTP server with host={} and port={}", DEFAULT_HOST, DEFAULT_PORT);
+        LOGGER.info("RestServerVerticle - creating HTTP server with host={} and port={}", DEFAULT_PORT);
         if (router != null) {
             // Start server instance
+            // Uses host 0.0.0.0 by default
             HttpServer server = vertx.getDelegate().createHttpServer(new HttpServerOptions()
-                    .setPort(DEFAULT_PORT)
-                    .setHost(DEFAULT_HOST));
+                    .setPort(DEFAULT_PORT));
             server.requestHandler(router).listen()
                     .onSuccess(r -> LOGGER.info("RestServerVerticle - Started listening on port {}", DEFAULT_PORT))
                     .onFailure(e -> LOGGER.error("RestServerVerticle - Failed to create HTTP Server, exception = {}", e));

@@ -14,8 +14,6 @@ services:
     image: ${docker.image.name}:${project.version}
     ports:
       - "9090:9090"
-    expose:
-      - "9090"
     environment:
       - user=${test.database.user}
       - secret=${test.database.password}
@@ -38,8 +36,6 @@ services:
       MYSQL_ROOT_HOST: '%'
     ports:
       - '3306:3306'
-    expose:
-      - '3306'
     volumes:
       - ${project.basedir}/target/test-classes/config/database/init.sql:/docker-entrypoint-initdb.d/init.sql
       - db:/var/lib/mysql
