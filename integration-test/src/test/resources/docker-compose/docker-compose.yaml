@@ -23,6 +23,8 @@ services:
     networks:
       network:
         ipv4_address: 172.18.0.2
+    depends_on:
+      - database
 
 
   database:

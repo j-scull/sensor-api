@@ -72,7 +72,7 @@ public class RestServerVerticle extends AbstractVerticle {
         } else {
             // There are only two  implementations of DatabaseConfig
             MySQLConfig mySQLConfig = (MySQLConfig) config.getDatabaseConfig();
-            return new MySQLClient(mySQLConfig);
+            return new MySQLClient(vertx, mySQLConfig);
         }
     }
 

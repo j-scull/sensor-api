@@ -41,7 +41,8 @@ public class SensorApiImpl implements SensorApi {
 
     private final Logger LOGGER = LoggerFactory.getLogger(Main.class);
 
-    private final String DATE_TIME_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
+    // Database insert times are stored in UTC. The sensor location/timezone will be stored separately
+    private final String DATE_TIME_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSS";
     private final String TIME_ZONE = "UTC";
 
     private static final String SENSOR_ID = "sensorId";
@@ -80,7 +81,10 @@ public class SensorApiImpl implements SensorApi {
         queryParams.add(updateRequest.getHumidity());
         queryParams.add(dateTimeString);
         this.databaseClient.insertData(queryParams).subscribe(result -> createdResponse(routingContext),
-                e -> internalServerError(routingContext));
+                e -> {
+                    LOGGER.error("logData - failed to connect to database, error = {}", e.getMessage());
+                    internalServerError(routingContext);
+                });
     }
 
     @Override

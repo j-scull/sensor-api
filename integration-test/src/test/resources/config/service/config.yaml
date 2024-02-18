@@ -1,6 +1,6 @@
 databaseConfig:
   type: mysql
-  host: 172.18.0.3
+  host: database    # service will connect to mysql host "database/172.18.0.3:3306"
   port: 3306
   database: database
   poolOptionsMaxSize: 4

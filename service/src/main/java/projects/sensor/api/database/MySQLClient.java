@@ -8,6 +8,7 @@ import io.vertx.ext.sql.UpdateResult;
 
 import io.vertx.mysqlclient.MySQLBuilder;
 import io.vertx.mysqlclient.MySQLConnectOptions;
+import io.vertx.reactivex.core.Vertx;
 import io.vertx.sqlclient.*;
 
 import org.slf4j.Logger;
@@ -27,9 +28,11 @@ public class MySQLClient implements DatabaseClient{
     private final MySQLConnectOptions connectOptions;
     private final PoolOptions poolOptions;
 
+    private Vertx vertx;
+
 //    private Pool sqlClient;
 
-    public MySQLClient(MySQLConfig mySQLConfig) {
+    public MySQLClient(Vertx vertx, MySQLConfig mySQLConfig) {
         LOGGER.info("MySQLClient - creating client with configuration = {}", mySQLConfig);
         connectOptions = new MySQLConnectOptions()
                 .setPort(mySQLConfig.getPort())
@@ -37,9 +40,9 @@ public class MySQLClient implements DatabaseClient{
                 .setDatabase(mySQLConfig.getDatabase())
                 .setUser(System.getenv("user"))
                 .setPassword(System.getenv("secret"));
-
         poolOptions = new PoolOptions()
                 .setMaxSize(mySQLConfig.getPoolOptionsMaxSize());
+        this.vertx = vertx;
     }
 
     public void createPooledClient(Handler<Pool> handler) {
@@ -59,12 +62,14 @@ public class MySQLClient implements DatabaseClient{
         LOGGER.info("MySQLClient - insertData - query parameters = {}", queryParams);
         return Single.create(singleEmitter -> {
             // Todo - refactor this, probably most can be re-used by different operations
-            Pool sqlClient = MySQLBuilder.pool()
-                    .with(poolOptions)
-                    .connectingTo(connectOptions)
-                    .build();
+
+            Pool sqlClient  = Pool.pool(vertx.getDelegate(), connectOptions, poolOptions);
+            LOGGER.info("sqlClient = {}", sqlClient);
             sqlClient.preparedQuery(insertDataQuery)
-                    .execute(Tuple.of(queryParams))
+                    .execute(Tuple.of(queryParams.getList().get(0), // ToDo - create a util class/method to handle this
+                                        queryParams.getList().get(1),
+                                        queryParams.getList().get(2),
+                                        queryParams.getList().get(3)))
                     .onComplete(result -> {
                         if (result.succeeded()) {
                             // Using sql UpdateResult for now
@@ -73,6 +78,7 @@ public class MySQLClient implements DatabaseClient{
                             singleEmitter.onError(result.cause());
                         }
                         sqlClient.close();
+                        LOGGER.info("query complete");
                     });
         });
     }
