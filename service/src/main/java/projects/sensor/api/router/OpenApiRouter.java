@@ -35,7 +35,7 @@ public class OpenApiRouter extends AbstractVerticle {
     private Config config;
     private SensorApiImpl sensorApiImpl;
 
-    private final Logger LOGGER = LoggerFactory.getLogger(Main.class);
+    private final Logger LOGGER = LoggerFactory.getLogger(OpenApiRouter.class);
 
     public OpenApiRouter(Vertx vertx, Config config, SensorApiImpl sensorApiImpl) {
         this.vertx = vertx;

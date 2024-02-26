@@ -27,7 +27,7 @@ public class RestServerVerticle extends AbstractVerticle {
 
     private static final int DEFAULT_PORT = 9090;
 
-    private final Logger LOGGER = LoggerFactory.getLogger(Main.class);
+    private final Logger LOGGER = LoggerFactory.getLogger(RestServerVerticle.class);
 
     @Override
     public void start() {

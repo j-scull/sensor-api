@@ -39,7 +39,7 @@ public class SensorApiImpl implements SensorApi {
 
     private ObjectMapper mapper;
 
-    private final Logger LOGGER = LoggerFactory.getLogger(Main.class);
+    private final Logger LOGGER = LoggerFactory.getLogger(SensorApiImpl.class);
 
     // Database insert times are stored in UTC. The sensor location/timezone will be stored separately
     private final String DATE_TIME_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSS";

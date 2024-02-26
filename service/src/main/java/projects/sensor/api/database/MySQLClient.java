@@ -18,7 +18,7 @@ import projects.sensor.api.config.database.MySQLConfig;
 
 public class MySQLClient implements DatabaseClient{
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(MySQLClient.class);
     private final String insertDataQuery = "INSERT INTO temperature_and_humidity (sensorId, temperature, humidity, time) VALUES (?, ?, ?, ?)";
     private final String selectDataQuery = "SELECT * FROM temperature_and_humidity WHERE time >= ? AND time < ?";
     private final String insertSensorQuery = "INSERT INTO sensor_info(sensorId, location, creationTime) VALUES (?, ?, ?)";

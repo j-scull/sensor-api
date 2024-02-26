@@ -11,7 +11,7 @@ import java.io.IOException;
 
 public class ConfigReader {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ConfigReader.class);
 
     private final static String DEFAULT_CONFIG_FILE= "/usr/share/sensor-api/config/config.yaml";
 

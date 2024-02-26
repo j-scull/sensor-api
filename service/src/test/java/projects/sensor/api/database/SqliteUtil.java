@@ -15,7 +15,7 @@ import java.sql.Statement;
  */
 public class SqliteUtil {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(SqliteUtil.class);
     
 
     public static void createTables(String url) {
