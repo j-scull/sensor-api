@@ -1,5 +1,4 @@
 
-# Todo - setup test network
 networks:
   network:
     driver: bridge
@@ -14,10 +13,19 @@ services:
     image: ${docker.image.name}:${project.version}
     ports:
       - "9090:9090"
+#      - "9010:9010"
     environment:
       - user=${test.database.user}
       - secret=${test.database.password}
       - LOG_LEVEL="debug"
+#      # for analysis with VisualVM
+#      - JAVA_TOOL_OPTIONS=
+#        -Dcom.sun.management.jmxremote
+#        -Dcom.sun.management.jmxremote.port=9010
+#        -Dcom.sun.management.jmxremote.local.only=false
+#        -Dcom.sun.management.jmxremote.authenticate=false
+#        -Dcom.sun.management.jmxremote.ssl=false
+
     volumes:
       - ${project.basedir}/target/test-classes/config/service/:/usr/share/sensor-api/config
     networks:
@@ -25,7 +33,6 @@ services:
         ipv4_address: 172.18.0.2
     depends_on:
       - database
-
 
   database:
     image: mysql/mysql-server:${mysql.server.version}
